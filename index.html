@@ -523,13 +523,26 @@ let botT=0;
 function stepBots(dt){
   if(net.mode!=='host' || !bots.length) return;
   const N=T.N, ds=T.length/N, prof=BOT_PROF[net.botLvl], on=state==='race'||state==='done'; if(on) botT+=dt;
+  const others=[], avoid=on && botT>2;
+  if(avoid){
+    for(const b of bots) if(!b.done) others.push({id:b.id, pos:b.s, lat:b.lat, v:b.v});
+    if(state==='race'){ const q=T.pts[car.idx]; others.push({id:'H', pos:car.idx, lat:(car.x-q.x)*q.tz-(car.z-q.z)*q.tx, v:Math.hypot(car.vx,car.vz)}); }
+    net.remotes.forEach((r,id)=>{ if(r.bot || net.results.some(x=>x.id===id)) return; r.nidx=nearest(r.dx,r.dz,r.nidx)[0]; const q=T.pts[r.nidx];
+      others.push({id, pos:r.nidx, lat:(r.dx-q.x)*q.tz-(r.dz-q.z)*q.tx, v:Math.hypot(r.vx,r.vz)}); });
+  }
   for(const b of bots){
     const i=((Math.floor(b.s)%N)+N)%N;
-    let tv=(on && !b.done)?prof[i]*b.f:0;
+    let tv=(on && !b.done)?prof[i]*b.f:0, dodge=0;
+    if(avoid && !b.done) for(const o of others){ if(o.id===b.id) continue;
+      let d=o.pos-b.s; d-=Math.round(d/N)*N; const gap=d*ds, dl=o.lat-b.lat, side=dl>0?-1:dl<0?1:(b.lane>=0?1:-1);
+      if(gap>0 && gap<20 && Math.abs(dl)<5.5){ dodge+=side*(20-gap)/20; if(gap<9.5 && Math.abs(dl)<3.9) tv=Math.min(tv,o.v); }
+      if(Math.abs(gap)<7.6 && Math.abs(dl)<3.8) b.lat+=side*(3.8-Math.abs(dl))*0.5*Math.min(1,10*dt); }
+    b.dg=(b.dg||0)+(Math.max(-1.5,Math.min(1.5,dodge))*8-(b.dg||0))*Math.min(1,4*dt);
     if(b.slip>0){ b.slip-=dt; tv*=0.6; } else if(on && Math.random()<dt*0.02*(3-net.botLvl)) b.slip=0.4+Math.random()*0.6;
     b.v+=Math.max(-BOT_BRK*dt, Math.min(150*dt, tv-b.v));
     const s0=b.s; b.s+=b.v*dt/ds;
-    b.lat+=(b.lane+4*Math.sin(b.ph+b.s*0.02)-b.lat)*Math.min(1,0.7*dt);
+    b.lat+=(Math.max(-24,Math.min(24,b.lane+4*Math.sin(b.ph+b.s*0.02)+b.dg))-b.lat)*Math.min(1,(0.7+2.5*Math.min(1,Math.abs(b.dg)/4))*dt);
+    b.lat=Math.max(-25.5,Math.min(25.5,b.lat));
     const lapsNow=Math.floor(b.s/N);
     if(lapsNow>Math.floor(s0/N) && lapsNow>=1){ b.bestLap=Math.min(b.bestLap,botT-b.lap0); b.lap0=botT;
       if(lapsNow>=LAPS && !b.done){ b.done=true; addResult(b.id, botT, b.bestLap); } }
@@ -621,7 +634,7 @@ function setRemote(a){
   for(let i=1;i<=5;i++) if(!isFinite(+a[i])) return;
   const id=a[0], pl=net.players.find(p=>p.id===id); if(!pl || idle()) return;
   let r=net.remotes.get(id);
-  if(!r){ r={car:makeCar(COLORS[pl.slot%8], false, pl.name), dx:+a[1], dz:+a[2], dh:+a[3], spin:0}; net.remotes.set(id,r); }
+  if(!r){ r={car:makeCar(COLORS[pl.slot%8], false, pl.name), dx:+a[1], dz:+a[2], dh:+a[3], spin:0, bot:!!pl.bot, nidx:-1, col:'#'+COLORS[pl.slot%8].toString(16).padStart(6,'0')}; net.remotes.set(id,r); }
   r.x=+a[1]; r.z=+a[2]; r.h=+a[3]; r.vx=+a[4]; r.vz=+a[5]; r.dr=+a[6]||0; r.prog=+a[7]||0; r.t=performance.now();
 }
 function updateRemotes(dt){
@@ -692,6 +705,21 @@ function collide(){
     push(ex*c+ez*s, -ex*s+ez*c, pen);
   }
 }
+// collisions souples entre voitures : chacun corrige sa propre voiture
+function collideCars(dt){
+  if(!net.remotes.size || raceT<2) return;
+  const fx=Math.sin(car.h), fz=Math.cos(car.h);
+  net.remotes.forEach((r,id)=>{
+    const ex=car.x-r.dx, ez=car.z-r.dz; if(ex*ex+ez*ez>144 || net.results.some(x=>x.id===id)) return;
+    const rx=Math.sin(r.dh), rz=Math.cos(r.dh); let pen=0, nx=0, nz=0;
+    for(const a of [1.9,-1.9]) for(const b of [1.9,-1.9]){ const px=car.x+fx*a-(r.dx+rx*b), pz=car.z+fz*a-(r.dz+rz*b), d=Math.hypot(px,pz);
+      if(d>1e-3 && 3.7-d>pen){ pen=3.7-d; nx=px/d; nz=pz/d; } }
+    if(pen<=0) return;
+    const k=(r.bot?1:0.5)*Math.min(1,22*dt); car.x+=nx*pen*k; car.z+=nz*pen*k;
+    const vn=(car.vx-r.vx)*nx+(car.vz-r.vz)*nz;
+    if(vn<0){ const behind=-(nx*fx+nz*fz)>0.5, j=-vn*(behind?0.9:0.5); car.vx+=nx*j; car.vz+=nz*j; car.hit=Math.max(car.hit,Math.min(0.45,-vn/160)); }
+  });
+}
 function step(dt){
   const ctl=state==='race';
   const up=ctl&&inp.up, down=(ctl&&inp.down)||state==='done', dk=ctl&&inp.drift;
@@ -713,7 +741,7 @@ function step(dt){
   vl*=Math.exp(-grip*dt);
   car.vx=fx*vf-fz*vl; car.vz=fz*vf+fx*vl;
   car.x+=car.vx*dt; car.z+=car.vz*dt;
-  collide();
+  collide(); if(ctl) collideCars(dt);
   const [idx,dist]=nearest(car.x,car.z,car.idx); car.idx=idx; car.onTrack=dist<BAR_IN+3;
   { const q=T.pts[idx], lat=(car.x-q.x)*q.tz-(car.z-q.z)*q.tx, lim=BAR_IN-CAR_R;
     if(dist<80 && Math.abs(lat)>lim){ const s=Math.sign(lat); push(-s*q.tz, s*q.tx, Math.abs(lat)-lim); const k=Math.exp(-1.5*dt); car.vx*=k; car.vz*=k; } }
@@ -766,7 +794,8 @@ function updateHud(){
   if(state==='race'){ if(wrongT>0.8) m='Demi-tour !'; else if(car.boost>0) m='Turbo !'; }
   msg.textContent=m; msg.style.display=m?'block':'none';
   mg.clearRect(0,0,mapC.width,mapC.height); mg.drawImage(mapBg,0,0);
-  mg.fillStyle='#ff5a4d'; mg.beginPath(); mg.arc(mx(car.x),mz(car.z),4.5,0,7); mg.fill(); mg.strokeStyle='#fff'; mg.lineWidth=1.5; mg.stroke();
+  net.remotes.forEach(r=>{ mg.fillStyle=r.col; mg.beginPath(); mg.arc(mx(r.dx),mz(r.dz),3.2,0,7); mg.fill(); mg.strokeStyle='rgba(20,22,30,.9)'; mg.lineWidth=1; mg.stroke(); });
+  mg.fillStyle='#'+my.paint.color.getHexString(); mg.beginPath(); mg.arc(mx(car.x),mz(car.z),5,0,7); mg.fill(); mg.strokeStyle='#fff'; mg.lineWidth=2; mg.stroke();
 }
 function updateCarVisual(dt){
   const fx=Math.sin(car.h), fz=Math.cos(car.h), vf=car.vx*fx+car.vz*fz;
