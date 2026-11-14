@@ -504,7 +504,7 @@ function renderEnd(){
 
 // ---------- Robots : pilotés par l'hôte, envoyés aux autres comme des joueurs ----------
 const BOT_NAMES=['Turbo','Zigzag','Boulon','Pixel','Rocket','Biscotte','Flash'];
-const BOT_LV=[{vmax:138,a:185},{vmax:160,a:235},{vmax:182,a:300}], BOT_BRK=260, bots=[];
+const BOT_LV=[{vmax:155,a:245},{vmax:170,a:300},{vmax:182,a:300}], BOT_BRK=260, bots=[];
 const BOT_PROF=(()=>{ const N=T.N, ds=T.length/N, rad=new Float32Array(N);
   for(let i=0;i<N;i++){ const a=T.pts[(i-4+N)%N], b=T.pts[(i+4)%N]; let d=Math.atan2(b.tx,b.tz)-Math.atan2(a.tx,a.tz); d=Math.abs(Math.atan2(Math.sin(d),Math.cos(d))); rad[i]=Math.min(2000,8*ds/Math.max(d,1e-4)); }
   return BOT_LV.map(l=>{ const v=new Float32Array(N); for(let i=0;i<N;i++) v[i]=Math.min(l.vmax,Math.sqrt(l.a*rad[i]));
