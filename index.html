@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
 <style>
-  html,body{margin:0;height:100%;overflow:hidden;background:#1b1d24;font-family:'Fredoka',system-ui,sans-serif;color:#fff;user-select:none;-webkit-user-select:none;touch-action:none}
+  html,body{margin:0;height:100%;overflow:hidden;background:#1b1d24;font-family:'Fredoka',system-ui,sans-serif;color:#fff;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
   canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
   #vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 58%,rgba(30,14,0,.34) 100%)}
   .pill{background:rgba(18,20,28,.62);border-radius:14px;padding:8px 14px;backdrop-filter:blur(4px)}
@@ -41,7 +41,8 @@
   #pad{position:absolute;left:calc(14px + env(safe-area-inset-left));bottom:calc(16px + env(safe-area-inset-bottom));width:216px;height:104px;display:flex;gap:10px;pointer-events:auto}
   #pad i{flex:1;border-radius:24px;font-size:34px;pointer-events:none}
   #bGas{right:calc(16px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));width:108px;height:108px;font-size:18px}
-  #bDrift{right:calc(134px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));width:92px;height:92px}
+  #bDrift{right:calc(24px + env(safe-area-inset-right));bottom:calc(134px + env(safe-area-inset-bottom));width:92px;height:92px}
+  #bBrake{right:calc(134px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));width:88px;height:88px;font-size:15px}
   #touch.tilt #pad{display:none}
   #tsBar{position:absolute;left:50%;top:calc(8px + env(safe-area-inset-top));transform:translateX(-50%);display:flex;gap:10px}
   .ts{width:42px;height:42px;border-radius:12px;font-size:20px}
@@ -100,6 +101,7 @@
   <div id="pad"><i id="pl">◀</i><i id="pr">▶</i></div>
   <div class="tb" id="bDrift" data-k="drift">DRIFT</div>
   <div class="tb" id="bGas" data-k="gas">GAZ</div>
+  <div class="tb" id="bBrake" data-k="down">FREIN</div>
   <div id="tsBar"><div class="ts" id="bResp">↺</div><div class="ts" id="bMute">♪</div></div>
 </div>
 <div id="rot">Tourne ton téléphone à l'horizontale<br>pour piloter 🔄</div>
@@ -118,7 +120,8 @@
     <details><summary>Commandes</summary>
     <div class="keys t">
       <kbd>◀ ▶</kbd><span>tourner (ou incliner le téléphone, selon le réglage)</span>
-      <kbd>GAZ</kbd><span>maintenir pour accélérer, relâcher pour freiner</span>
+      <kbd>GAZ</kbd><span>maintenir pour accélérer, relâcher pour ralentir</span>
+      <kbd>FREIN</kbd><span>freiner fort, puis marche arrière</span>
       <kbd>DRIFT</kbd><span>maintenir en tournant (garde aussi les gaz), relâcher pour un petit turbo</span>
       <kbd>↺</kbd><span>replacer la voiture sur la piste</span>
     </div>
@@ -621,7 +624,7 @@ const fx = (()=>{
 
 // ---------- Entrées ----------
 const keys={}, touch={steer:0};
-const inp={ get up(){return keys.ArrowUp||keys.KeyW||touch.gas||touch.drift;}, get down(){return keys.ArrowDown||keys.KeyS||(MOBILE&&!this.up);},
+const inp={ get up(){return keys.ArrowUp||keys.KeyW||touch.gas||touch.drift;}, get down(){return keys.ArrowDown||keys.KeyS||touch.down||(MOBILE&&!this.up);},
   get steer(){ const k=((keys.ArrowLeft||keys.KeyA)?1:0)-((keys.ArrowRight||keys.KeyD)?1:0); return k||touch.steer||0; },
   get drift(){return keys.Space||keys.ShiftLeft||keys.ShiftRight||touch.drift;} };
 addEventListener('keydown',e=>{
@@ -632,7 +635,7 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyM') muted=!muted;
 });
 addEventListener('keyup',e=>{keys[e.code]=false;});
-addEventListener('blur',()=>{for(const k in keys) keys[k]=false; touch.gas=touch.drift=false; if(ctlMode!=='tilt') touch.steer=0;});
+addEventListener('blur',()=>{for(const k in keys) keys[k]=false; touch.gas=touch.drift=touch.down=false; if(ctlMode!=='tilt') touch.steer=0;});
 // ---------- Commandes tactiles (téléphone) ----------
 let ctlMode='btn', tiltSeen=false, tiltListen=false;
 function onMotion(e){ const g=e.accelerationIncludingGravity; if(!g || g.x==null || ctlMode!=='tilt') return; tiltSeen=true;
@@ -653,15 +656,24 @@ if(MOBILE){
   let saved='btn'; try{ saved=localStorage.getItem('hrc_ctl')||'btn'; }catch(e){}
   setCtl(saved==='tilt'?'tilt':'btn', false);
   document.getElementById('ctlSel').addEventListener('change',e=>setCtl(e.target.value,true));
-  document.querySelectorAll('.tb').forEach(b=>{ const k=b.dataset.k, set=v=>e=>{ e.preventDefault(); touch[k]=v; b.classList.toggle('on',v); };
-    b.addEventListener('pointerdown',e=>{ try{ b.setPointerCapture(e.pointerId); }catch(_){} set(true)(e); }); ['pointerup','pointercancel','lostpointercapture'].forEach(n=>b.addEventListener(n,set(false))); });
-  // pavé de direction : le pouce peut glisser de gauche à droite sans se lever
-  const pad=document.getElementById('pad'), pl=document.getElementById('pl'), pr=document.getElementById('pr'); let padId=null;
-  const padSet=v=>{ touch.steer=v; pl.classList.toggle('on',v>0); pr.classList.toggle('on',v<0); };
-  const padMove=e=>{ if(e.pointerId!==padId) return; e.preventDefault(); const r=pad.getBoundingClientRect(); padSet(e.clientX<r.left+r.width/2?1:-1); };
-  pad.addEventListener('pointerdown',e=>{ padId=e.pointerId; try{ pad.setPointerCapture(padId); }catch(_){} padMove(e); });
-  pad.addEventListener('pointermove',padMove);
-  ['pointerup','pointercancel','lostpointercapture'].forEach(n=>pad.addEventListener(n,e=>{ if(e.pointerId===padId){ padId=null; padSet(0); } }));
+  // Un seul gestionnaire pour tous les doigts : à chaque évènement, l'état des commandes est recalculé
+  // à partir de la liste complète des doigts posés (rien ne reste « coincé », même si un doigt glisse ou si le système annule un toucher).
+  const pad=document.getElementById('pad'), pl=document.getElementById('pl'), pr=document.getElementById('pr');
+  const btns=[...document.querySelectorAll('.tb')], own=new Map();
+  const hit=(x,y)=>{ let best=null, bd=1e9; btns.forEach(b=>{ const r=b.getBoundingClientRect(), d=Math.hypot(x-(r.left+r.width/2), y-(r.top+r.height/2))-r.width/2; if(d<bd){ bd=d; best=b; } }); return bd<34?best:null; };
+  const sync=e=>{ if(!document.body.classList.contains('racing')) return;
+    const tg=e.target; if(tg && tg.closest && tg.closest('.overlay,#tsBar,#rot')) return;
+    if(e.cancelable) e.preventDefault();
+    const W=innerWidth, tilt=ctlMode==='tilt', seen=new Set(); let steer=0; const st={gas:false,drift:false,down:false};
+    for(const t of e.touches){ seen.add(t.identifier); let o=own.get(t.identifier);
+      if(o===undefined){ o=(!tilt && t.clientX<W*0.45)?'pad':(hit(t.clientX,t.clientY)||null); own.set(t.identifier,o); }
+      if(o==='pad'){ const r=pad.getBoundingClientRect(); steer=t.clientX<r.left+r.width/2?1:-1; }
+      else { const h=hit(t.clientX,t.clientY); if(h && h!==o){ o=h; own.set(t.identifier,o); } if(o) st[o.dataset.k]=true; } }
+    own.forEach((v,id)=>{ if(!seen.has(id)) own.delete(id); });
+    if(!tilt){ touch.steer=steer; pl.classList.toggle('on',steer>0); pr.classList.toggle('on',steer<0); }
+    btns.forEach(b=>{ const k=b.dataset.k; touch[k]=st[k]; b.classList.toggle('on',st[k]); }); };
+  ['touchstart','touchmove','touchend','touchcancel'].forEach(n=>document.addEventListener(n,sync,{passive:false}));
+  ['gesturestart','gesturechange'].forEach(n=>document.addEventListener(n,e=>e.preventDefault()));
   const tap=(id,fn)=>document.getElementById(id).addEventListener('pointerdown',e=>{ e.preventDefault(); fn(e.currentTarget); });
   tap('bResp',()=>{ if(state==='race') respawn(); });
   tap('bMute',b=>{ muted=!muted; b.classList.toggle('on',muted); });
@@ -967,7 +979,7 @@ function step(dt){
   car.draft=Math.max(0,Math.min(1,(car.draft||0)+(inDraft?1.4:-2.5)*dt));
   let maxS=MAX*(car.onTrack?1:0.55)*(1+0.11*car.draft); const boosting=car.boost>0; if(boosting){ maxS*=1.22; car.boost-=dt; }
   if(up && !down){ if(vf<maxS) vf+=ACC*(boosting?1.7:1)*(1+0.35*car.draft)*(1-0.6*Math.max(0,vf)/maxS)*dt; }
-  else if(down){ if(vf>2) vf-=BRAKE*((MOBILE&&ctl&&!(keys.ArrowDown||keys.KeyS))?0.6:1)*dt; else if(ctl && (!MOBILE||keys.ArrowDown||keys.KeyS)) vf=Math.max(-REV, vf-ACC*0.6*dt); else vf=0; }
+  else if(down){ if(vf>2) vf-=BRAKE*((MOBILE&&ctl&&!(keys.ArrowDown||keys.KeyS||touch.down))?0.6:1)*dt; else if(ctl && (!MOBILE||keys.ArrowDown||keys.KeyS||touch.down)) vf=Math.max(-REV, vf-ACC*0.6*dt); else vf=0; }
   else { const dec=45*dt; vf=Math.abs(vf)<dec?0:vf-Math.sign(vf)*dec; }
   if(vf>maxS) vf-=(vf-maxS)*(1-Math.exp(-(car.onTrack?3:5)*dt));
   vl*=Math.exp(-grip*dt);
