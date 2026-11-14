@@ -40,10 +40,9 @@
   .tb.on,.ts.on,#pad i.on{background:rgba(255,216,74,.6)}
   #pad{position:absolute;left:calc(14px + env(safe-area-inset-left));bottom:calc(16px + env(safe-area-inset-bottom));width:216px;height:104px;display:flex;gap:10px;pointer-events:auto}
   #pad i{flex:1;border-radius:24px;font-size:34px;pointer-events:none}
-  #bDrift{right:calc(16px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));width:104px;height:104px}
-  #bBrake{right:calc(132px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));width:76px;height:76px;font-size:14px}
+  #bGas{right:calc(16px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));width:108px;height:108px;font-size:18px}
+  #bDrift{right:calc(134px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));width:92px;height:92px}
   #touch.tilt #pad{display:none}
-  #touch.tilt #bBrake{right:auto;left:calc(16px + env(safe-area-inset-left));width:104px;height:104px;font-size:16px}
   #tsBar{position:absolute;left:50%;top:calc(8px + env(safe-area-inset-top));transform:translateX(-50%);display:flex;gap:10px}
   .ts{width:42px;height:42px;border-radius:12px;font-size:20px}
   #rot{position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;background:#1b1d24;font-size:22px;font-weight:700;padding:30px;z-index:9}
@@ -100,7 +99,7 @@
 <div id="touch">
   <div id="pad"><i id="pl">◀</i><i id="pr">▶</i></div>
   <div class="tb" id="bDrift" data-k="drift">DRIFT</div>
-  <div class="tb" id="bBrake" data-k="down">FREIN</div>
+  <div class="tb" id="bGas" data-k="gas">GAZ</div>
   <div id="tsBar"><div class="ts" id="bResp">↺</div><div class="ts" id="bMute">♪</div></div>
 </div>
 <div id="rot">Tourne ton téléphone à l'horizontale<br>pour piloter 🔄</div>
@@ -119,9 +118,8 @@
     <details><summary>Commandes</summary>
     <div class="keys t">
       <kbd>◀ ▶</kbd><span>tourner (ou incliner le téléphone, selon le réglage)</span>
-      <kbd>Gaz</kbd><span>automatique : la voiture accélère toute seule</span>
-      <kbd>FREIN</kbd><span>freiner, puis reculer</span>
-      <kbd>DRIFT</kbd><span>maintenir en tournant, relâcher pour un petit turbo</span>
+      <kbd>GAZ</kbd><span>maintenir pour accélérer, relâcher pour freiner</span>
+      <kbd>DRIFT</kbd><span>maintenir en tournant (garde aussi les gaz), relâcher pour un petit turbo</span>
       <kbd>↺</kbd><span>replacer la voiture sur la piste</span>
     </div>
     <div class="keys k">
@@ -623,7 +621,7 @@ const fx = (()=>{
 
 // ---------- Entrées ----------
 const keys={}, touch={steer:0};
-const inp={ get up(){return keys.ArrowUp||keys.KeyW||(MOBILE&&!touch.down);}, get down(){return keys.ArrowDown||keys.KeyS||touch.down;},
+const inp={ get up(){return keys.ArrowUp||keys.KeyW||touch.gas||touch.drift;}, get down(){return keys.ArrowDown||keys.KeyS||(MOBILE&&!this.up);},
   get steer(){ const k=((keys.ArrowLeft||keys.KeyA)?1:0)-((keys.ArrowRight||keys.KeyD)?1:0); return k||touch.steer||0; },
   get drift(){return keys.Space||keys.ShiftLeft||keys.ShiftRight||touch.drift;} };
 addEventListener('keydown',e=>{
@@ -634,7 +632,7 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyM') muted=!muted;
 });
 addEventListener('keyup',e=>{keys[e.code]=false;});
-addEventListener('blur',()=>{for(const k in keys) keys[k]=false; touch.down=touch.drift=false; if(ctlMode!=='tilt') touch.steer=0;});
+addEventListener('blur',()=>{for(const k in keys) keys[k]=false; touch.gas=touch.drift=false; if(ctlMode!=='tilt') touch.steer=0;});
 // ---------- Commandes tactiles (téléphone) ----------
 let ctlMode='btn', tiltSeen=false, tiltListen=false;
 function onMotion(e){ const g=e.accelerationIncludingGravity; if(!g || g.x==null || ctlMode!=='tilt') return; tiltSeen=true;
@@ -969,7 +967,7 @@ function step(dt){
   car.draft=Math.max(0,Math.min(1,(car.draft||0)+(inDraft?1.4:-2.5)*dt));
   let maxS=MAX*(car.onTrack?1:0.55)*(1+0.11*car.draft); const boosting=car.boost>0; if(boosting){ maxS*=1.22; car.boost-=dt; }
   if(up && !down){ if(vf<maxS) vf+=ACC*(boosting?1.7:1)*(1+0.35*car.draft)*(1-0.6*Math.max(0,vf)/maxS)*dt; }
-  else if(down){ if(vf>2) vf-=BRAKE*dt; else if(ctl) vf=Math.max(-REV, vf-ACC*0.6*dt); else vf=0; }
+  else if(down){ if(vf>2) vf-=BRAKE*((MOBILE&&ctl&&!(keys.ArrowDown||keys.KeyS))?0.6:1)*dt; else if(ctl && (!MOBILE||keys.ArrowDown||keys.KeyS)) vf=Math.max(-REV, vf-ACC*0.6*dt); else vf=0; }
   else { const dec=45*dt; vf=Math.abs(vf)<dec?0:vf-Math.sign(vf)*dec; }
   if(vf>maxS) vf-=(vf-maxS)*(1-Math.exp(-(car.onTrack?3:5)*dt));
   vl*=Math.exp(-grip*dt);
