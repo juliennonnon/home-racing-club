@@ -236,8 +236,9 @@ const woodTx = (()=>{ const c=cv(512,512), g=c.getContext('2d'), hc=cv(512,512),
   for(let k=0;k<260;k++){ const y=rnd()*512, amp=rnd()*7, ph=rnd()*6, fr=0.006+rnd()*0.02, dk=rnd()<0.6, a=0.05+rnd()*0.16, lw=0.6+rnd()*2.4;
     [[g,dk?`rgba(92,52,20,${a})`:`rgba(255,232,190,${a*0.8})`],[hg,dk?`rgba(0,0,0,${a*1.6})`:`rgba(255,255,255,${a})`]].forEach(([q,st])=>{ q.strokeStyle=st; q.lineWidth=lw; q.beginPath(); for(let x=-8;x<=520;x+=16) q.lineTo(x, y+Math.sin(x*fr+ph)*amp); q.stroke(); }); }
   return {map:texFrom(c,true), nrm:normalFromHeight(hc,1.6)}; })();
+const PANO_ROT=0, MATS={wood:[], sofa:[], chair:[], curtain:[], outPlanes:[]};
 const fab = (color, cm=2.6, ns=0.75)=>new THREE.MeshStandardMaterial({color, map:tile(weave.map,cm), normalMap:tile(weave.nrm,cm), normalScale:new THREE.Vector2(ns,ns), roughness:0.97});
-const wood = (color, cm=55, rough=0.5)=>new THREE.MeshStandardMaterial({color, map:tile(woodTx.map,cm), normalMap:tile(woodTx.nrm,cm), normalScale:new THREE.Vector2(0.55,0.55), roughness:rough, envMapIntensity:0.7});
+const wood = (color, cm=55, rough=0.5)=>{ const m=new THREE.MeshStandardMaterial({color, map:tile(woodTx.map,cm), normalMap:tile(woodTx.nrm,cm), normalScale:new THREE.Vector2(0.55,0.55), roughness:rough, envMapIntensity:0.7}); MATS.wood.push(m); return m; };
 const softRect = (()=>{ const c=cv(128,128), g=c.getContext('2d'); g.shadowColor='#000'; g.shadowBlur=22; g.fillStyle='#000'; g.fillRect(30,30,68,68); g.fillRect(30,30,68,68); return new THREE.CanvasTexture(c); })();
 function ao(x,z,w,d,op,rot,y){ const m=new THREE.Mesh(new THREE.PlaneGeometry(w*1.55,d*1.55), new THREE.MeshBasicMaterial({map:softRect, transparent:true, opacity:op, depthWrite:false, color:0x1a0f06}));
   m.rotation.set(-Math.PI/2,0,rot||0); m.position.set(x,y||0.05,z); m.renderOrder=2; scene.add(m); return m; }
@@ -281,13 +282,15 @@ const WINDOWS = [{x0:-228,x1:-72,y0:105,y1:215},{x0:160,x1:330,y0:8,y1:218}];
       for(let i=0;i<60;i++){ const x=rnd()*1024, y=rnd()*1024, r=60+rnd()*180, gr=q.createRadialGradient(x,y,4,x,y,r), v=rnd()<0.5?60:128; gr.addColorStop(0,`rgba(${v},${v},${v},.5)`); gr.addColorStop(1,`rgba(${v},${v},${v},0)`); q.fillStyle=gr; q.fillRect(x-r,y-r,2*r,2*r); }
       for(let i=0;i<900;i++){ const x=rnd()*1024, y=rnd()*1024, a=rnd()*6.28, l=10+rnd()*90; q.strokeStyle=`rgba(190,190,190,${0.15+rnd()*0.4})`; q.lineWidth=0.5+rnd(); q.beginPath(); q.moveTo(x,y); q.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l); q.stroke(); }
       return texFrom(rc,false,hx/70,hz/70); })()}));
-  floor.rotation.x=-Math.PI/2; floor.receiveShadow=true; scene.add(floor);
-  const plaster = canvasTex(256,256,(c)=>{ c.fillStyle='#f3ebdc'; c.fillRect(0,0,256,256); for(let i=0;i<7000;i++){ c.fillStyle=rnd()<0.5?'rgba(120,96,60,.02)':'rgba(255,255,255,.035)'; c.fillRect(rnd()*256,rnd()*256,1+rnd()*2,1+rnd()*2); } }, 9, 3);
+  floor.rotation.x=-Math.PI/2; floor.receiveShadow=true; scene.add(floor); MATS.floor=floor.material;
+  const plaster = canvasTex(256,256,(c)=>{ c.fillStyle='#f3ebdc'; c.fillRect(0,0,256,256); for(let i=0;i<7000;i++){ c.fillStyle=rnd()<0.5?'rgba(120,96,60,.02)':'rgba(255,255,255,.035)'; c.fillRect(rnd()*256,rnd()*256,1+rnd()*2,1+rnd()*2); } }, 1.8, 1.8);
   const ph=cv(256,256), pq=ph.getContext('2d'); pq.fillStyle='#808080'; pq.fillRect(0,0,256,256); for(let i=0;i<5200;i++){ const x=rnd()*256, y=rnd()*256, r=1+rnd()*3.5, gr=pq.createRadialGradient(x,y,0,x,y,r), v=rnd()<0.5?0:255; gr.addColorStop(0,`rgba(${v},${v},${v},.5)`); gr.addColorStop(1,`rgba(${v},${v},${v},0)`); pq.fillStyle=gr; pq.fillRect(x-r,y-r,2*r,2*r); }
-  const wallM = new THREE.MeshStandardMaterial({map:plaster, roughness:0.93, color:0xf6ecda, normalMap:(()=>{ const n=normalFromHeight(ph,1.4); n.repeat.set(26,8); return n; })(), normalScale:new THREE.Vector2(0.6,0.6)}), trim = mat(0xfbf8f0, 0.45);
+  const wallM = new THREE.MeshStandardMaterial({map:plaster, roughness:0.93, color:0xf6ecda, normalMap:(()=>{ const n=normalFromHeight(ph,1.4); n.repeat.set(5,5); return n; })(), normalScale:new THREE.Vector2(0.6,0.6)}), trim = mat(0xfbf8f0, 0.45);
   const ceil = new THREE.Mesh(new THREE.PlaneGeometry(hx*2+30, hz*2+30), new THREE.MeshStandardMaterial({color:0xfbf6ea, roughness:1, emissive:0xfff1dc, emissiveIntensity:0.34})); ceil.rotation.x=Math.PI/2; ceil.position.y=h; ceil.castShadow=true; scene.add(ceil);
   // murs (le mur du fond est découpé autour des fenêtres) + plinthes moulurées
-  const wall=(w,hh,x,y,z,ry)=>{ const m=new THREE.Mesh(new THREE.PlaneGeometry(w,hh), wallM); m.position.set(x,y,z); m.rotation.y=ry; m.receiveShadow=true; m.castShadow=true; scene.add(m); };
+  MATS.wall=wallM;
+  const wall=(w,hh,x,y,z,ry)=>{ const wg=new THREE.PlaneGeometry(w,hh), uvA=wg.attributes.uv, o=(Math.abs(Math.sin(ry))>0.5?z:x)-w/2; for(let i=0;i<uvA.count;i++) uvA.setXY(i,(uvA.getX(i)*w+o)/200,(uvA.getY(i)*hh+y-hh/2)/200);
+    const m=new THREE.Mesh(wg, wallM); m.position.set(x,y,z); m.rotation.y=ry; m.receiveShadow=true; m.castShadow=true; scene.add(m); };
   const hid=new THREE.MeshBasicMaterial({colorWrite:false, depthWrite:false}), blk=(w,hh,d,x,y,z)=>{ const m=new THREE.Mesh(new THREE.BoxGeometry(w,hh,d), hid); m.position.set(x,y,z); m.castShadow=true; scene.add(m); };
   blk(hx*2+120,30,hz*2+120,0,h+18,0); blk(30,h+60,hz*2+120,-hx-18,h/2,0);
   const D=22, DZ0=124, DZ1=216, DH=208, revM=mat(0xf1e7d4,0.93);
@@ -303,9 +306,9 @@ const WINDOWS = [{x0:-228,x1:-72,y0:105,y1:215},{x0:160,x1:330,y0:8,y1:218}];
   // fenêtres : vue floue du jardin, huisseries, rideaux de lin
   const out = canvasTex(256,256,(c)=>{ const gr=c.createLinearGradient(0,0,0,256); gr.addColorStop(0,'#cfe6ff'); gr.addColorStop(0.55,'#f7fbff'); gr.addColorStop(0.62,'#cfe2b4'); gr.addColorStop(1,'#8fb56a'); c.fillStyle=gr; c.fillRect(0,0,256,256);
     for(let i=0;i<22;i++){ const x=rnd()*256, y=118+rnd()*60, r=26+rnd()*34, q=c.createRadialGradient(x,y,2,x,y,r); q.addColorStop(0,`rgba(${50+rnd()*50},${105+rnd()*50},${50+rnd()*30},.85)`); q.addColorStop(1,'rgba(90,140,70,0)'); c.fillStyle=q; c.fillRect(x-r,y-r,r*2,r*2); } });
-  const linen = fab(0xefe2cc, 1.6, 0.65); linen.side=THREE.DoubleSide; linen.emissive=new THREE.Color(0xffdfb0); linen.emissiveIntensity=0.13;
+  const linen = fab(0xefe2cc, 1.6, 0.65); linen.side=THREE.DoubleSide; linen.emissive=new THREE.Color(0xffdfb0); linen.emissiveIntensity=0.13; MATS.curtain.push(linen);
   WINDOWS.forEach(w=>{ const cx=(w.x0+w.x1)/2, cy=(w.y0+w.y1)/2, ww=w.x1-w.x0, wh=w.y1-w.y0;
-    const gl=new THREE.Mesh(new THREE.PlaneGeometry(ww*2.6,wh*2.2), new THREE.MeshBasicMaterial({map:out, fog:false})); gl.position.set(cx+40,cy+18,-hz-D-80); scene.add(gl);
+    const gl=new THREE.Mesh(new THREE.PlaneGeometry(ww*2.6,wh*2.2), new THREE.MeshBasicMaterial({map:out, fog:false})); gl.position.set(cx+40,cy+18,-hz-D-80); scene.add(gl); MATS.outPlanes.push(gl);
     // embrasure : le mur a une épaisseur, la fenêtre est posée au fond du renfoncement
     box(ww+4,2,D,cx,w.y1+1,-hz-D/2,revM); box(2,wh+4,D,w.x0-1,cy,-hz-D/2,revM); box(2,wh+4,D,w.x1+1,cy,-hz-D/2,revM);
     if(w.y0>10) box(ww+16,3,D+9,cx,w.y0-1.5,-hz-D/2+4.5,trim); else box(ww+4,w.y0,D,cx,w.y0/2,-hz-D/2,wood(0xb98a5a,40,0.5));
@@ -369,7 +372,7 @@ const WINDOWS = [{x0:-228,x1:-72,y0:105,y1:215},{x0:160,x1:330,y0:8,y1:218}];
   const oak=wood(0xf0d6ae,60,0.45), walnut=wood(0x9a6a44,60,0.42), dark=wood(0x5d3d27,50,0.45), brass=mat(0xc9a25a,0.28,{metalness:0.9});
   const leg=(p,hh,r,m,par)=>cyl(r,r*0.62,hh,p.x,hh/2,p.z,m,par||scene,12);
   // canapé en tissu (on roule dessous)
-  const s=SOFA, y0=s.clear, sf=fab(0x6b8597), sf2=fab(0x7b95a7);
+  const s=SOFA, y0=s.clear, sf=fab(0x6b8597), sf2=fab(0x7b95a7); MATS.sofa.push(sf,sf2);
   rbox(s.w,20,s.d,5,s.x,y0+10,s.z,sf); rbox(s.w-10,50,20,8,s.x,y0+42,s.z-s.d/2+11,sf);
   [-1,1].forEach(k=>rbox(24,40,s.d,9,s.x+k*(s.w/2-12),y0+34,s.z,sf));
   for(let i=0;i<3;i++){ rbox(60,14,70,6,s.x-61+i*61,y0+26,s.z+10,sf2); rbox(59,40,15,7,s.x-61+i*61,y0+52,s.z-s.d/2+30,sf2).rotation.x=-0.2; }
@@ -380,7 +383,7 @@ const WINDOWS = [{x0:-228,x1:-72,y0:105,y1:215},{x0:160,x1:330,y0:8,y1:218}];
   cyl(4.2,3.6,9,t.x+34,t.h+8.5,t.z+10,mat(0xf7f3ea,0.25)); rbox(24,17,3,0.6,t.x-28,t.h+5.5,t.z-8,mat(0x2f6f73,0.7)).rotation.set(Math.PI/2,0,0.3);
   rbox(21,15,2.4,0.6,t.x-27,t.h+8.2,t.z-7,mat(0xd9c9a8,0.8)).rotation.set(Math.PI/2,0,0.5); cyl(7,5,7,t.x+2,t.h+7.5,t.z-18,mat(0x4f6f5b,0.5));
   // fauteuil bouclé
-  const c=CHAIR, g=new THREE.Group(); g.position.set(c.x,0,c.z); g.rotation.y=c.rot; scene.add(g); const cf=fab(0xb8683a,1.7,0.9), cf2=fab(0xc67848,1.7,0.9);
+  const c=CHAIR, g=new THREE.Group(); g.position.set(c.x,0,c.z); g.rotation.y=c.rot; scene.add(g); const cf=fab(0xb8683a,1.7,0.9), cf2=fab(0xc67848,1.7,0.9); MATS.chair.push(cf,cf2);
   rbox(c.w,18,c.d,6,0,c.clear+9,0,cf,g); rbox(c.w-8,48,18,8,0,c.clear+40,-c.d/2+10,cf,g); [-1,1].forEach(k=>rbox(16,30,c.d,7,k*(c.w/2-8),c.clear+28,0,cf,g));
   rbox(50,12,54,5,0,c.clear+23,6,cf2,g); legPos(c,6).forEach(p=>leg(p,c.clear,2.5,dark)); ao(c.x,c.z,c.w,c.d,0.55,c.rot);
   // table à manger en noyer, chaises, suspension
@@ -476,7 +479,7 @@ const WINDOWS = [{x0:-228,x1:-72,y0:105,y1:215},{x0:160,x1:330,y0:8,y1:218}];
   for(let i=0;i<64000;i++){ const x=rnd()*RS, y=rnd()*RS, r=0.5+rnd()*rnd()*2.6, v=rnd();
     rg.fillStyle=v<0.5?'rgba(0,0,0,.30)':v<0.9?'rgba(112,112,118,.24)':'rgba(190,186,176,.2)'; rg.beginPath(); rg.arc(x,y,r,0,7); rg.fill();
     rq.fillStyle=v<0.5?'rgba(0,0,0,.40)':'rgba(255,255,255,.40)'; rq.beginPath(); rq.arc(x,y,r,0,7); rq.fill(); }
-  const road=new THREE.Mesh(mk(pos,null,uv), new THREE.MeshStandardMaterial({map:texFrom(rc,true), normalMap:normalFromHeight(rh,2.2), normalScale:new THREE.Vector2(0.6,0.6), roughness:0.84, envMapIntensity:0.5, side:THREE.DoubleSide})); road.receiveShadow=true; scene.add(road);
+  const road=new THREE.Mesh(mk(pos,null,uv), new THREE.MeshStandardMaterial({map:texFrom(rc,true), normalMap:normalFromHeight(rh,2.2), normalScale:new THREE.Vector2(0.6,0.6), roughness:0.84, envMapIntensity:0.5, side:THREE.DoubleSide})); road.receiveShadow=true; scene.add(road); MATS.road=road.material;
   // gomme déposée sur la trajectoire
   const lp=[], lu=[]; for(let i=0;i<N;i++){ const o=Math.sin(i*0.021)*5, a=P(i,o-14,0.462), b=P(i,o+14,0.462), o2=Math.sin((i+1)*0.021)*5, c=P(i+1,o2-14,0.462), d=P(i+1,o2+14,0.462); lp.push(...a,...b,...c, ...b,...d,...c); lu.push(0,0,1,0,0,0, 1,0,1,0,0,0); }
   const rub=new THREE.Mesh(mk(lp,null,lu), new THREE.MeshBasicMaterial({map:canvasTex(64,4,(c)=>{ const gr=c.createLinearGradient(0,0,64,0); gr.addColorStop(0,'rgba(0,0,0,0)'); gr.addColorStop(0.5,'rgba(0,0,0,1)'); gr.addColorStop(1,'rgba(0,0,0,0)'); c.clearRect(0,0,64,4); c.fillStyle=gr; c.fillRect(0,0,64,4); }), transparent:true, opacity:0.32, depthWrite:false, side:THREE.DoubleSide})); rub.renderOrder=1; scene.add(rub);
@@ -542,6 +545,23 @@ const fx = (()=>{
       } else { lastW[0]=lastW[1]=null; }
       net.remotes.forEach(r=>{ if(r.dr && Math.random()<dt*14) this.puff(r.dx-Math.sin(r.dh)*2.6, r.dz-Math.cos(r.dh)*2.6); });
       if(window.dustPts) window.dustPts.position.y=Math.sin(performance.now()*0.0004)*2; } };
+})();
+
+// ---------- Textures photo (dossier assets) : elles remplacent les matières calculées dès qu'elles sont chargées ----------
+(function(){
+  const L=new THREE.TextureLoader(), aniso=renderer.capabilities.getMaxAnisotropy(), files={map:'couleur', nrm:'relief', arm:'brillance'};
+  const load=(name,cb)=>{ const t={}; let n=0, bad=false; Object.keys(files).forEach(k=>{ t[k]=L.load('assets/'+name+'/'+files[k]+'.jpg', tx=>{ tx.wrapS=tx.wrapT=THREE.RepeatWrapping; tx.anisotropy=aniso; if(k==='map') tx.encoding=THREE.sRGBEncoding; if(++n===3 && !bad) cb(t); }, undefined, ()=>{ bad=true; }); }); };
+  const put=(m,t,rx,ry,o)=>{ if(!m) return; const c=k=>{ const x=t[k].clone(); x.repeat.set(rx,ry); x.needsUpdate=true; return x; };
+    m.map=c('map'); m.normalMap=c('nrm'); m.roughnessMap=c('arm'); m.bumpMap=null; m.roughness=o.rough||1; m.metalness=0; if(m.normalScale) m.normalScale.set(o.ns||1,o.ns||1); if(o.color) m.color.setRGB(o.color[0],o.color[1],o.color[2]); m.needsUpdate=true; };
+  load('parquet',t=>put(MATS.floor,t,ROOM.hx*2/150,ROOM.hz*2/150,{ns:1.2,color:[1.12,1.08,1.02]}));
+  load('mur',t=>put(MATS.wall,t,1,1,{ns:1,color:[1.42,1.32,1.16]}));
+  load('piste',t=>put(MATS.road,t,0.7,0.7,{ns:1.1,color:[1.15,1.15,1.15]}));
+  load('canape',t=>MATS.sofa.forEach((m,i)=>put(m,t,1/34,1/34,{ns:1,color:i?[1.02,1.02,1.02]:[0.9,0.9,0.93]})));
+  load('fauteuil',t=>MATS.chair.forEach((m,i)=>put(m,t,1/30,1/30,{ns:1,color:i?[1.4,1.1,0.82]:[1.25,0.98,0.72]})));
+  load('rideau',t=>MATS.curtain.forEach(m=>{ put(m,t,1/40,1/40,{ns:1,color:[0.82,0.8,0.8]}); m.emissive.setHex(0xd8640a); m.emissiveIntensity=0.1; }));
+  load('bois',t=>MATS.wood.forEach(m=>{ const c=m.color; put(m,t,1/60,1/60,{ns:0.9,rough:1,color:[Math.min(1.5,c.r*1.45),Math.min(1.5,c.g*1.45),Math.min(1.5,c.b*1.5)]}); }));
+  L.load('assets/dehors/panorama.jpg', tx=>{ tx.encoding=THREE.sRGBEncoding; const sky=new THREE.Mesh(new THREE.SphereGeometry(1700,48,24), new THREE.MeshBasicMaterial({map:tx, side:THREE.BackSide, fog:false, color:new THREE.Color(1.25,1.25,1.25)}));
+    sky.rotation.y=PANO_ROT; sky.position.y=-20; scene.add(sky); MATS.outPlanes.forEach(p=>p.visible=false); });
 })();
 
 // ---------- Entrées ----------
