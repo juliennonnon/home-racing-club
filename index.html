@@ -13,6 +13,7 @@
   #vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 58%,rgba(30,14,0,.34) 100%)}
   .pill{background:rgba(18,20,28,.62);border-radius:14px;padding:8px 14px;backdrop-filter:blur(4px)}
   #hud{position:fixed;inset:0;pointer-events:none;display:none}
+  #lines{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
   #info{position:absolute;left:14px;top:14px;font-size:17px;line-height:1.45}
   #info b{font-size:26px}
   #info small{opacity:.75;font-size:14px}
@@ -87,6 +88,7 @@
 <body>
 <canvas id="c"></canvas>
 
+<canvas id="lines" width="640" height="360"></canvas>
 <div id="hud">
   <div id="info" class="pill">Tour <b id="lap">1</b>/<span id="laps">3</span><br><span id="time">0:00.00</span><br><small>Meilleur tour : <span id="best">—</span></small></div>
   <canvas id="map" width="186" height="134"></canvas>
@@ -900,9 +902,9 @@ const menuMsg=m=>{ $('menuMsg').textContent=m||''; };
 function clearRemotes(){ net.remotes.forEach(r=>scene.remove(r.car.g)); net.remotes.clear(); }
 function netReset(){ const p=net.peer; net.peer=null; try{ p&&p.destroy(); }catch(e){}
   net.conns.clear(); net.hc=null; net.players=[]; net.results=[]; net.last.clear(); clearRemotes(); net.mode='solo'; net.myId='H'; net.code=''; net.local=false; net.botN=0; bots.length=0; }
-function toMenu(msg){ netReset(); state='menu'; document.body.classList.remove('racing'); ['lobby','end','hud'].forEach(i=>$(i).style.display='none'); $('count').style.display='none';
+function toMenu(msg){ netReset(); state='menu'; drawSpeedLines(); document.body.classList.remove('racing'); ['lobby','end','hud'].forEach(i=>$(i).style.display='none'); $('count').style.display='none';
   $('menu').style.display='flex'; menuMsg(msg); setColor(0); placeAt(0,7); }
-function showLobby(){ state='lobby'; document.body.classList.remove('racing'); ['menu','end','hud'].forEach(i=>$(i).style.display='none'); $('lobby').style.display='flex'; setColor(mySlot()); placeGrid(mySlot()); renderLobby(); }
+function showLobby(){ state='lobby'; drawSpeedLines(); document.body.classList.remove('racing'); ['menu','end','hud'].forEach(i=>$(i).style.display='none'); $('lobby').style.display='flex'; setColor(mySlot()); placeGrid(mySlot()); renderLobby(); }
 function goLobby(){ clearRemotes(); net.results=[]; net.last.clear(); showLobby(); }
 function renderLobby(){
   $('lobbyCode').textContent=net.code; const host=net.mode==='host';
@@ -1130,12 +1132,25 @@ const mx=x=>(x+ROOM.hx)/(2*ROOM.hx)*(mapC.width-16)+8, mz=z=>(z+ROOM.hz)/(2*ROOM
 (function(){ const g=mapBg.getContext('2d'); g.lineJoin='round'; g.beginPath(); T.pts.forEach((p,i)=>i?g.lineTo(mx(p.x),mz(p.z)):g.moveTo(mx(p.x),mz(p.z))); g.closePath();
   g.strokeStyle='rgba(255,255,255,.9)'; g.lineWidth=5; g.stroke(); g.strokeStyle='#3b3e48'; g.lineWidth=2.5; g.stroke();
   g.fillStyle='#ffd84a'; g.fillRect(mx(T.pts[0].x)-1.5, mz(T.pts[0].z)-6, 3, 12); })();
+// lignes de vitesse : des traits qui filent du centre vers les bords quand on est dans l'aspiration d'une voiture
+const SL={c:null,g:null,l:[],on:false};
+function drawSpeedLines(){
+  if(!SL.c){ SL.c=document.getElementById('lines'); SL.g=SL.c.getContext('2d'); for(let i=0;i<46;i++) SL.l.push({a:Math.random()*6.283, r:Math.random(), v:0.9+Math.random()*1.3, w:0.6+Math.random()*1.6, n:0.10+Math.random()*0.16}); }
+  const k=state==='race'?Math.max(0,Math.min(1,(car.draft-0.08)/0.6)):0, c=SL.c, g=SL.g;
+  if(k<=0){ if(SL.on){ g.clearRect(0,0,c.width,c.height); SL.on=false; } return; }
+  const W=c.width, H=c.height, cx=W/2, cy=H*0.46, R=Math.hypot(W,H)/2; SL.on=true; g.clearRect(0,0,W,H); g.lineCap='round';
+  for(const q of SL.l){ q.r+=q.v*0.022; if(q.r>1){ q.r=0.28+Math.random()*0.15; q.a=Math.random()*6.283; }
+    const r0=q.r*R, r1=Math.min(R,(q.r+q.n*(0.5+q.r))*R), ca=Math.cos(q.a), sa=Math.sin(q.a);
+    g.strokeStyle='rgba(255,255,255,'+(k*0.55*Math.min(1,(q.r-0.26)*5)*(1-q.r*0.35)).toFixed(3)+')'; g.lineWidth=q.w*(0.6+q.r*1.6);
+    g.beginPath(); g.moveTo(cx+ca*r0*1.25, cy+sa*r0); g.lineTo(cx+ca*r1*1.25, cy+sa*r1); g.stroke(); }
+}
 function updateHud(){
   const sp=Math.hypot(car.vx,car.vz);
   $('kmh').textContent=Math.round(sp*0.62);
   if(state==='race'){ $('time').textContent=fmt(raceT-lapStart); $('lap').textContent=Math.min(LAPS, lapTimes.length+1); }
   const msg=$('msg'); let m='';
-  if(state==='race'){ if(wrongT>0.8) m='Demi-tour !'; else if(car.boost>0) m='Turbo !'; else if(car.draft>0.45) m='Aspiration !'; }
+  if(state==='race'){ if(wrongT>0.8) m='Demi-tour !'; else if(car.boost>0) m='Turbo !'; }
+  drawSpeedLines();
   msg.textContent=m; msg.style.display=m?'block':'none';
   mg.clearRect(0,0,mapC.width,mapC.height); mg.drawImage(mapBg,0,0);
   net.remotes.forEach(r=>{ mg.fillStyle=r.col; mg.beginPath(); mg.arc(mx(r.dx),mz(r.dz),3.2,0,7); mg.fill(); mg.strokeStyle='rgba(20,22,30,.9)'; mg.lineWidth=1; mg.stroke(); });
