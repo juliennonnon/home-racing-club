@@ -704,9 +704,10 @@ const tireM=(()=>{ // gomme : rainures autour du pneu, pavés et lamelles en bia
   return new THREE.MeshStandardMaterial({map:texFrom(c,true), normalMap:normalFromHeight(hc,3), normalScale:new THREE.Vector2(1.6,1.6), roughness:0.82, envMapIntensity:0.35}); })(), rimM=mat(0x15161a,0.5,{metalness:0.15,envMapIntensity:0.35}), rimBackM=mat(0x060607,0.8), glassM=new THREE.MeshStandardMaterial({color:0x030405, roughness:0.12, metalness:0, envMapIntensity:0.45, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2}), chromeM=mat(0x121316,0.55,{metalness:0.2}), floorM=new THREE.MeshBasicMaterial({color:0x08080a, side:THREE.DoubleSide}), pOff={side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2},
   lightFM=new THREE.MeshBasicMaterial(Object.assign({color:0xfff4d2},pOff)), lightRM=new THREE.MeshBasicMaterial({color:0xff2414}), grilleM=new THREE.MeshBasicMaterial(Object.assign({color:0x0b0b0d},pOff));
 function makeCar(color, mine, name, slot){
-  const g=new THREE.Group(), body=new THREE.Group(), wheels=[], pivots=[], sparks=[]; g.add(body); let lab=null;
+  const g=new THREE.Group(), body=new THREE.Group(), wheels=[], pivots=[], sparks=[]; g.add(body); let lab=null, tl=null;
   const geo=carGeo, MD=carModel.geo, paint=new THREE.MeshPhysicalMaterial({color, roughness:0.42, metalness:0.3, clearcoat:1, clearcoatRoughness:0.05, envMapIntensity:0.8, normalMap:flakeTex, normalScale:new THREE.Vector2(0.45,0.45), side:THREE.DoubleSide, vertexColors:!!MD});
-  if(MD){ add(new THREE.Mesh(MD, paint), body); body.add(new THREE.Mesh(carModel.glass, carModel.gm||(carModel.gm=new THREE.MeshStandardMaterial({color:0x040506, roughness:0.22, metalness:0, envMapIntensity:0.16, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2})))); box(2.2,0.7,6.6,0,0.75,0,chromeM,body,false); }   // carrosserie modélisée (assets/voiture.bin)
+  if(MD){ add(new THREE.Mesh(MD, paint), body); body.add(new THREE.Mesh(carModel.glass, carModel.gm||(carModel.gm=new THREE.MeshPhysicalMaterial({color:0x020203, roughness:0.06, metalness:0, clearcoat:1, clearcoatRoughness:0.03, envMapIntensity:0.38, side:THREE.DoubleSide}))), new THREE.Mesh(carModel.lf, lightFM));
+    tl=new THREE.MeshBasicMaterial(Object.assign({color:0x3d0503},pOff)); body.add(new THREE.Mesh(carModel.lr, tl)); box(2.2,0.7,6.6,0,0.75,0,chromeM,body,false); }   // carrosserie modélisée (assets/voiture.bin)
   else {
   add(new THREE.Mesh(geo.low, paint), body); body.add(new THREE.Mesh(geo.glass, glassM), new THREE.Mesh(geo.lightF, lightFM), new THREE.Mesh(geo.grille, grilleM));
   rbox(2.3,0.5,0.34,0.1,0,1.5,-4.14,chromeM,body,false); rbox(2.0,0.26,0.3,0.08,0,1.5,-4.24,lightRM,body,false);                                   // barre de feux arrière
@@ -721,14 +722,14 @@ function makeCar(color, mine, name, slot){
     lab=new THREE.Sprite(new THREE.SpriteMaterial({map:tex, transparent:true, depthWrite:false, fog:false})); lab.scale.set(10,2.5,1); lab.position.y=6.4; g.add(lab); }
   const sh=new THREE.Mesh(new THREE.PlaneGeometry(7.8,13.4), new THREE.MeshBasicMaterial({map:softRect, transparent:true, opacity:0.62, depthWrite:false, color:0x000000})); sh.rotation.x=-Math.PI/2; sh.position.y=0.07; sh.renderOrder=2; g.add(sh);
   g.position.y=0.45; scene.add(g);
-  return {g, body, wheels, pivots, sparks, paint, lab};
+  return {g, body, wheels, pivots, sparks, paint, lab, tl};
 }
 let my = makeCar(COLORS[0], true, null, 0), carG = my.g, bodyG = my.body, wheels = my.wheels, frontPivots = my.pivots, sparks = my.sparks, mySlotShown = 0;
 try{ fetch('assets/voiture.bin').then(r=>{ if(!r.ok) throw 0; return r.arrayBuffer(); }).then(buf=>{ const hd=new Float32Array(buf,0,4), nv=hd[0], ni=hd[1], sc=hd[2], q=new Int16Array(buf,16,nv*3); let o=16+nv*6; o+=(4-o%4)%4; const nb=new Int8Array(buf,o,nv*3); o+=nv*3; o+=(4-o%4)%4; const cb=new Uint8Array(buf,o,nv); o+=nv; o+=(4-o%4)%4;
-    const P=new Float32Array(nv*3), Nn=new Float32Array(nv*3), C=new Float32Array(nv*3), U=new Float32Array(nv*2), K=[[1,1,1],[0.012,0.012,0.016],[0.03,0.03,0.036]];
+    const P=new Float32Array(nv*3), Nn=new Float32Array(nv*3), C=new Float32Array(nv*3), U=new Float32Array(nv*2), K=[[1,1,1],[0.012,0.012,0.016],[0.03,0.03,0.036],[1,1,1],[1,1,1]];
     for(let i=0;i<nv;i++){ for(let k=0;k<3;k++){ P[i*3+k]=q[i*3+k]*sc; Nn[i*3+k]=nb[i*3+k]/127; C[i*3+k]=K[cb[i]][k]; } U[i*2]=(P[i*3]+P[i*3+1]*0.7)/3.2; U[i*2+1]=P[i*3+2]/3.2; }
-    const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(P,3)); g.setAttribute('normal',new THREE.BufferAttribute(Nn,3)); g.setAttribute('color',new THREE.BufferAttribute(C,3)); g.setAttribute('uv',new THREE.BufferAttribute(U,2)); const ix=new Uint16Array(buf.slice(o,o+ni*2)), ip=[], ig=[]; for(let i=0;i<ni;i+=3) (cb[ix[i]]===1?ig:ip).push(ix[i],ix[i+1],ix[i+2]);   // les vitres forment une pièce à part (verre noir)
-    g.setIndex(ip); const gg=new THREE.BufferGeometry(); gg.setAttribute('position',g.attributes.position); gg.setAttribute('normal',g.attributes.normal); gg.setIndex(ig); carModel.glass=gg;
+    const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(P,3)); g.setAttribute('normal',new THREE.BufferAttribute(Nn,3)); g.setAttribute('color',new THREE.BufferAttribute(C,3)); g.setAttribute('uv',new THREE.BufferAttribute(U,2)); const ix=new Uint16Array(buf.slice(o,o+ni*2)), ip=[], ig=[], ih=[], it=[]; for(let i=0;i<ni;i+=3){ const c=cb[ix[i]]; (c===1?ig:c===3?ih:c===4?it:ip).push(ix[i],ix[i+1],ix[i+2]); }   // les vitres forment une pièce à part (verre noir)
+    g.setIndex(ip); const gg=new THREE.BufferGeometry(); gg.setAttribute('position',g.attributes.position); gg.setAttribute('normal',g.attributes.normal); gg.setIndex(ig); carModel.glass=gg; const sub=q=>{ const o=new THREE.BufferGeometry(); o.setAttribute('position',g.attributes.position); o.setAttribute('normal',g.attributes.normal); o.setIndex(q); return o; }; carModel.lf=sub(ih); carModel.lr=sub(it);
     carModel.geo=g; const sl=mySlotShown; mySlotShown=-1; setColor(sl); net.remotes.forEach(r=>{ if(r.car && r.slot!==undefined){ /* les voitures déjà créées gardent leur forme jusqu'à la prochaine course */ } }); }).catch(()=>{}); }catch(e){}
 function setColor(slot){ slot%=8; if(slot===mySlotShown) return; scene.remove(my.g); my=makeCar(COLORS[slot], true, null, slot); carG=my.g; bodyG=my.body; wheels=my.wheels; frontPivots=my.pivots; sparks=my.sparks; mySlotShown=slot; }
 
@@ -1033,6 +1034,7 @@ function updateRemotes(dt){
     if(Math.hypot(tx-r.dx,tz-r.dz)>40){ r.dx=tx; r.dz=tz; r.dh=r.h; }
     r.dx+=(tx-r.dx)*k; r.dz+=(tz-r.dz)*k; let d=r.h-r.dh; d=Math.atan2(Math.sin(d),Math.cos(d)); r.dh+=d*k;
     const g=r.car.g; g.position.x=r.dx; g.position.z=r.dz; g.rotation.y=r.dh;
+    if(r.car.tl){ const sp=Math.hypot(r.vx,r.vz); r.sps=r.sps===undefined?sp:r.sps+(sp-r.sps)*Math.min(1,3*dt); r.car.tl.color.setHex(sp<r.sps-1.5 && sp>8 ? 0xff5a30 : 0x3d0503); }   // feux stop des autres : allumés quand la voiture ralentit
     if(r.car.lab) r.car.lab.visible=(r.dx-car.x)*Math.sin(car.h)+(r.dz-car.z)*Math.cos(car.h)>4;   // le nom ne s'affiche que pour les voitures devant soi
     r.car.body.rotation.y+=(r.dr*0.32-r.car.body.rotation.y)*Math.min(1,8*dt);
     r.spin+=(r.vx*Math.sin(r.h)+r.vz*Math.cos(r.h))/1.1*dt; r.car.wheels.forEach(w=>w.rotation.x=r.spin); });
@@ -1219,6 +1221,7 @@ function updateCarVisual(dt){
   frontPivots.forEach(p=>p.rotation.y=car.steer*0.45);
   const col=car.charge>1.6?0xff8a1e:car.charge>0.7?0x4fc3ff:0xffffff;
   sparks.forEach(s=>{ s.visible=car.drift; s.material.color.setHex(col); const k=0.7+Math.random()*0.8; s.scale.set(k,k,k); });
+  if(my.tl) my.tl.color.setHex(!idle() && state!=='count' && (inp.down || !inp.up) && Math.abs(vf)>8 ? 0xff5a30 : 0x3d0503);   // feux stop : dès qu'on lâche les gaz ou qu'on freine
   car.hit*=Math.exp(-6*dt);
   if(osc){ const t=actx.currentTime; osc.frequency.setTargetAtTime(58+Math.abs(vf)*1.5+(car.drift?25:0), t, 0.05);
     gain.gain.setTargetAtTime((muted||idle()||state==='done')?0:0.03+(inp.up?0.02:0), t, 0.08); }
