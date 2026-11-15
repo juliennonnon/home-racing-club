@@ -707,7 +707,7 @@ const tireM=(()=>{ // gomme : rainures autour du pneu, pavés et lamelles en bia
   lightFM=new THREE.MeshBasicMaterial(Object.assign({color:0xfff4d2},pOff)), lightRM=new THREE.MeshBasicMaterial({color:0xff2414}), grilleM=new THREE.MeshBasicMaterial(Object.assign({color:0x0b0b0d},pOff));
 function makeCar(color, mine, name, slot){
   const g=new THREE.Group(), body=new THREE.Group(), wheels=[], pivots=[], sparks=[]; g.add(body); let lab=null, tl=null;
-  const geo=carGeo, MD=carModel.geo, paint=new THREE.MeshPhysicalMaterial({color, roughness:0.42, metalness:0.3, clearcoat:1, clearcoatRoughness:0.05, envMapIntensity:0.8, normalMap:flakeTex, normalScale:new THREE.Vector2(0.45,0.45), side:THREE.DoubleSide, vertexColors:!!MD});
+  const geo=carGeo, MD=carModel.geo, paint=new THREE.MeshPhysicalMaterial({color, roughness:0.34, metalness:0.3, clearcoat:1, clearcoatRoughness:0.03, envMapIntensity:0.9, normalMap:flakeTex, normalScale:new THREE.Vector2(0.45,0.45), side:THREE.DoubleSide, vertexColors:!!MD});
   if(MD){ add(new THREE.Mesh(MD, paint), body); body.add(new THREE.Mesh(carModel.glass, carModel.gm||(carModel.gm=new THREE.MeshStandardMaterial({color:0x0b0c0f, roughness:0.2, metalness:0, envMapIntensity:0.22, side:THREE.DoubleSide}))), new THREE.Mesh(carModel.lf, carModel.hm||(carModel.hm=new THREE.MeshBasicMaterial(Object.assign({color:0xfff2cf},pOff)))));
     tl={m:new THREE.MeshBasicMaterial(Object.assign({color:0x8a1208},pOff)), g:[], on:null}; body.add(new THREE.Mesh(carModel.lr, tl.m));
     // halos lumineux : phares (blanc chaud) et feux arrière (rouge, plus forts au freinage)
