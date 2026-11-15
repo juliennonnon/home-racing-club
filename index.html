@@ -21,6 +21,8 @@
   #lights i.r{background:#ff2a1a;box-shadow:0 0 18px #ff2a1a, inset 0 -4px 6px rgba(0,0,0,.25)} #lights i.g{background:#35e06a;box-shadow:0 0 18px #35e06a, inset 0 -4px 6px rgba(0,0,0,.25)}
   body.mob #lights{top:16%;gap:7px;padding:7px 10px} body.mob #lights i{width:24px;height:24px}
   #msg.big{font-size:54px;top:33%;color:#fff} body.mob #msg.big{font-size:36px}
+  #adEnd{margin:8px auto 4px} #adEnd img{display:block;margin:0 auto;width:auto;max-width:100%;max-height:34vh;border-radius:12px}
+  #statLine{font-size:12px;opacity:.6;margin:2px 0;min-height:0}
   #lines{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
   #info{position:absolute;left:14px;top:14px;font-size:17px;line-height:1.45}
   #info b{font-size:26px}
@@ -129,6 +131,7 @@
     <div class="row opt"><span data-i>Robots</span> <select id="botN" class="in sel"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select> <span data-i>Niveau</span> <select id="botLvl" class="in sel"><option value="0" data-i>Facile</option><option value="1" selected data-i>Moyen</option><option value="2" data-i>Difficile</option></select></div>
     <div class="row opt" id="ctlRow"><span data-i>Commandes</span> <select id="ctlSel" class="in sel"><option value="btn" data-i>Boutons</option><option value="tilt" data-i>Incliner le téléphone</option></select></div>
     <p id="menuMsg" class="msg"></p>
+    <p id="statLine"></p>
     <details><summary data-i>Commandes</summary>
     <div class="keys t">
       <kbd>◀ ▶</kbd><span data-i>tourner (ou incliner le téléphone, selon le réglage)</span>
@@ -163,6 +166,7 @@
     <p><span data-i>Ton temps :</span> <b id="total"></b></p>
     <table class="laps" id="lapTable"></table>
     <p id="record"></p>
+    <a id="adEnd" target="_blank" rel="noopener sponsored" style="display:none"><img alt=""></a>
     <button class="go" id="againBtn">Rejouer</button>
     <div class="row"><button class="go ghost" id="quitBtn" data-i>Menu principal</button></div>
   </div>
@@ -239,17 +243,19 @@ BOXES.push({x:BOOKS.x,z:BOOKS.z,hw:BOOKS.w/2,hd:BOOKS.d/2,rot:BOOKS.rot});
 SLIPPERS.forEach(s=>BOXES.push({x:s.x,z:s.z,hw:5,hd:13,rot:s.rot}));
 /*DATA-END*/
 
+// emplacements d'affichage (sponsors) : remplis à partir de assets/pub/pub.json
+const AD={};
 // ---------- Rendu ----------
 const canvas = document.getElementById('c');
 // ---------- Langue : français ou anglais (les textes français servent de clés) ----------
-const EN={"Tour": "Lap", "Meilleur tour :": "Best lap:", "<b>R</b> replacer la voiture · <b>M</b> couper le son": "<b>R</b> reset the car · <b>M</b> mute", "GAZ": "GAS", "FREIN": "BRAKE", "Tourne ton téléphone à l'horizontale<br>pour piloter 🔄": "Turn your phone sideways<br>to drive 🔄", "Course de mini-voitures dans le salon · jusqu'à 8 joueurs": "Mini car racing in the living room · up to 8 players", "Ton pseudo": "Your nickname", "Créer une partie": "Create a game", "Rejoindre": "Join", "Jouer en solo": "Play solo", "Robots": "Bots", "Niveau": "Level", "Facile": "Easy", "Moyen": "Medium", "Difficile": "Hard", "Boutons": "Buttons", "Incliner le téléphone": "Tilt the phone", "Commandes": "Controls", "tourner (ou incliner le téléphone, selon le réglage)": "steer (or tilt the phone, depending on the setting)", "maintenir pour accélérer, relâcher pour ralentir": "hold to accelerate, release to slow down", "freiner fort, puis marche arrière": "brake hard, then reverse", "glisser le pouce du GAZ vers le haut : on dérape en gardant les gaz, relâcher pour un petit turbo": "slide your thumb up from GAS: you drift while keeping the throttle, release for a small boost", "replacer la voiture sur la piste": "put the car back on the track", "ou W A S D : accélérer, freiner, tourner": "or W A S D: accelerate, brake, steer", "Espace": "Space", "dérapage (maintenir en tournant, relâcher pour un petit turbo)": "drift (hold while turning, release for a small boost)", "Salon": "Lobby", "Lancer la course": "Start the race", "En attente du lancement par l'hôte…": "Waiting for the host to start…", "Quitter": "Leave", "Arrivée <span>!</span>": "Finish<span>!</span>", "Ton temps :": "Your time:", "Rejouer": "Play again", "Menu principal": "Main menu", "Nouveau record du tour : ": "New lap record: ", "Ton record du tour : ": "Your lap record: ", " (toi)": " (you)", "en course…": "racing…", "Retour au salon": "Back to lobby", " · L'hôte relance la partie depuis le salon.": " · The host restarts the game from the lobby.", "Donne ce code aux autres joueurs": "Give this code to the other players", "Tu es dans la partie": "You are in the game", " · robot": " · bot", " · hôte": " · host", "Le mode réseau est indisponible sur cette page.": "Network play is unavailable on this page.", "Création de la partie…": "Creating the game…", "Impossible de créer la partie (": "Could not create the game (", "). Vérifie ta connexion ou coupe ton VPN.": "). Check your connection or turn off your VPN.", "erreur": "error", "Entre le code à 4 lettres de la partie.": "Enter the game's 4-letter code.", "Connexion à la partie ": "Connecting to game ", "Pas de réponse. Vérifie le code, et coupe ton VPN si tu en as un.": "No answer. Check the code, and turn off your VPN if you use one.", "L'hôte a quitté la partie.": "The host left the game.", "Connexion impossible.": "Could not connect.", "Aucune partie avec ce code.": "No game with this code.", "Erreur de connexion (": "Connection error (", "La partie est complète (8 joueurs).": "The game is full (8 players).", "La course est déjà lancée, réessaie dans un instant.": "The race has already started, try again in a moment.", "Demi-tour !": "Wrong way!", "Turbo !": "Boost!", "GO !": "GO!", "Dernier tour !": "Final lap!", "Pilote": "Driver"};
+const EN={"Tour": "Lap", "Meilleur tour :": "Best lap:", "<b>R</b> replacer la voiture · <b>M</b> couper le son": "<b>R</b> reset the car · <b>M</b> mute", "GAZ": "GAS", "FREIN": "BRAKE", "Tourne ton téléphone à l'horizontale<br>pour piloter 🔄": "Turn your phone sideways<br>to drive 🔄", "Course de mini-voitures dans le salon · jusqu'à 8 joueurs": "Mini car racing in the living room · up to 8 players", "Ton pseudo": "Your nickname", "Créer une partie": "Create a game", "Rejoindre": "Join", "Jouer en solo": "Play solo", "Robots": "Bots", "Niveau": "Level", "Facile": "Easy", "Moyen": "Medium", "Difficile": "Hard", "Boutons": "Buttons", "Incliner le téléphone": "Tilt the phone", "Commandes": "Controls", "tourner (ou incliner le téléphone, selon le réglage)": "steer (or tilt the phone, depending on the setting)", "maintenir pour accélérer, relâcher pour ralentir": "hold to accelerate, release to slow down", "freiner fort, puis marche arrière": "brake hard, then reverse", "glisser le pouce du GAZ vers le haut : on dérape en gardant les gaz, relâcher pour un petit turbo": "slide your thumb up from GAS: you drift while keeping the throttle, release for a small boost", "replacer la voiture sur la piste": "put the car back on the track", "ou W A S D : accélérer, freiner, tourner": "or W A S D: accelerate, brake, steer", "Espace": "Space", "dérapage (maintenir en tournant, relâcher pour un petit turbo)": "drift (hold while turning, release for a small boost)", "Salon": "Lobby", "Lancer la course": "Start the race", "En attente du lancement par l'hôte…": "Waiting for the host to start…", "Quitter": "Leave", "Arrivée <span>!</span>": "Finish<span>!</span>", "Ton temps :": "Your time:", "Rejouer": "Play again", "Menu principal": "Main menu", "Nouveau record du tour : ": "New lap record: ", "Ton record du tour : ": "Your lap record: ", " (toi)": " (you)", "en course…": "racing…", "Retour au salon": "Back to lobby", " · L'hôte relance la partie depuis le salon.": " · The host restarts the game from the lobby.", "Donne ce code aux autres joueurs": "Give this code to the other players", "Tu es dans la partie": "You are in the game", " · robot": " · bot", " · hôte": " · host", "Le mode réseau est indisponible sur cette page.": "Network play is unavailable on this page.", "Création de la partie…": "Creating the game…", "Impossible de créer la partie (": "Could not create the game (", "). Vérifie ta connexion ou coupe ton VPN.": "). Check your connection or turn off your VPN.", "erreur": "error", "Entre le code à 4 lettres de la partie.": "Enter the game's 4-letter code.", "Connexion à la partie ": "Connecting to game ", "Pas de réponse. Vérifie le code, et coupe ton VPN si tu en as un.": "No answer. Check the code, and turn off your VPN if you use one.", "L'hôte a quitté la partie.": "The host left the game.", "Connexion impossible.": "Could not connect.", "Aucune partie avec ce code.": "No game with this code.", "Erreur de connexion (": "Connection error (", "La partie est complète (8 joueurs).": "The game is full (8 players).", "La course est déjà lancée, réessaie dans un instant.": "The race has already started, try again in a moment.", "Demi-tour !": "Wrong way!", "Turbo !": "Boost!", "GO !": "GO!", "Dernier tour !": "Final lap!", "Pilote": "Driver", " courses jouées": " races played"};
 let LANG='fr'; try{ LANG=localStorage.getItem('hrc_lang')||((navigator.language||'fr').toLowerCase().startsWith('fr')?'fr':'en'); }catch(e){}
 const tr=t=>(LANG==='en' && EN[t]!==undefined)?EN[t]:t;
 function applyLang(l){ if(l){ LANG=l; try{ localStorage.setItem('hrc_lang',l); }catch(e){} } document.documentElement.lang=LANG;
   document.querySelectorAll('[data-i]').forEach(e=>{ if(e._fr===undefined) e._fr=e.innerHTML; e.innerHTML=tr(e._fr); });
   document.querySelectorAll('[data-ip]').forEach(e=>{ if(e._fr===undefined) e._fr=e.placeholder; e.placeholder=tr(e._fr); });
   document.querySelectorAll('#langSel button').forEach(b=>b.classList.toggle('on',b.dataset.l===LANG));
-  try{ if(state==='lobby') renderLobby(); }catch(e){} }
+  try{ if(state==='lobby') renderLobby(); }catch(e){} try{ showAdEnd(); showStat(); }catch(e){} }
 document.querySelectorAll('#langSel button').forEach(b=>b.addEventListener('click',()=>applyLang(b.dataset.l))); applyLang();
 // Téléphone ou tablette : commandes tactiles et rendu allégé (forçable avec ?mobile=1 ou ?mobile=0)
 const MOBILE = /[?&]mobile=1/.test(location.search) || (!/[?&]mobile=0/.test(location.search) && !!window.matchMedia && matchMedia('(pointer:coarse)').matches && navigator.maxTouchPoints>0);
@@ -425,8 +431,8 @@ const WINDOWS = [{x0:-228,x1:-72,y0:105,y1:215},{x0:160,x1:330,y0:8,y1:218}];
   [DZ0-3.5,DZ1+3.5].forEach(z=>box(1.6,DH+7,7,hx-0.8,(DH+7)/2,z,trim,scene,false)); box(1.6,7,DZ1-DZ0+14,hx-0.8,DH+3.5,dz,trim,scene,false);
   [[hx-1,24,-20,1],[-hx+1,24,150,1],[-360,24,hz-1,0]].forEach(([x,y,z,side])=>{ const o=rbox(8,8,1.2,1,x,y,z,mat(0xfdfbf5,0.4),scene,false); if(side) o.rotation.y=Math.PI/2; });
   const art=(w,hh,x,y,z,ry,hue)=>{ const t=canvasTex(128,128,(c)=>{ c.fillStyle=`hsl(${hue},35%,86%)`; c.fillRect(0,0,128,128); for(let i=0;i<7;i++){ c.fillStyle=`hsla(${hue+rnd()*70-20},${45+rnd()*30}%,${35+rnd()*40}%,.85)`; c.beginPath(); c.arc(rnd()*128,rnd()*128,12+rnd()*34,0,7); c.fill(); } });
-    const f=box(w+6,hh+6,2.5,x,y,z,wood(0x8a5a36,40),scene,false); f.rotation.y=ry; const p=new THREE.Mesh(new THREE.PlaneGeometry(w,hh), new THREE.MeshStandardMaterial({map:t, roughness:0.8})); p.material.polygonOffset=true; p.material.polygonOffsetFactor=-2; p.material.polygonOffsetUnits=-4; p.position.set(x+Math.sin(ry)*1.9,y,z+Math.cos(ry)*1.9); p.rotation.y=ry; scene.add(p); };
-  art(80,56,hx-2,150,-60,-Math.PI/2,18); art(44,60,hx-2,150,-180,-Math.PI/2,190); art(110,70,-340,155,hz-2,Math.PI,35); art(50,50,-hx+2,160,-190,Math.PI/2,140);
+    const f=box(w+6,hh+6,2.5,x,y,z,wood(0x8a5a36,40),scene,false); f.rotation.y=ry; const p=new THREE.Mesh(new THREE.PlaneGeometry(w,hh), new THREE.MeshStandardMaterial({map:t, roughness:0.8})); p.material.polygonOffset=true; p.material.polygonOffsetFactor=-2; p.material.polygonOffsetUnits=-4; p.position.set(x+Math.sin(ry)*1.9,y,z+Math.cos(ry)*1.9); p.rotation.y=ry; scene.add(p); return p; };
+  AD.cadre43=art(84,63,hx-2,150,-60,-Math.PI/2,18); art(44,60,hx-2,150,-180,-Math.PI/2,190); art(110,70,-340,155,hz-2,Math.PI,35); AD.cadre11=art(60,60,-hx+2,160,-190,Math.PI/2,140);
   cyl(22,22,3,0,h-1.5,0,mat(0xfbf6ea,0.6),scene,24); cyl(16,16,6,0,h-5,0,new THREE.MeshStandardMaterial({color:0xfff4dc, emissive:0xffe2b0, emissiveIntensity:0.6}),scene,24);
 })();
 
@@ -478,7 +484,7 @@ const WINDOWS = [{x0:-228,x1:-72,y0:105,y1:215},{x0:160,x1:330,y0:8,y1:218}];
   // meuble TV, écran, enceintes
   rbox(TV.w,TV.h-6,TV.d,1.5,TV.x,(TV.h-6)/2+6,TV.z,walnut); [-1,1].forEach(k=>[-1,1].forEach(j=>cyl(1.8,1.2,6,TV.x+k*(TV.w/2-10),3,TV.z+j*(TV.d/2-6),dark,scene,10)));
   [-47,0,47].forEach(o=>box(0.5,TV.h-12,0.4,TV.x+o+23.5,TV.h/2+3,TV.z-TV.d/2-0.1,mat(0x3a2718,0.6),scene,false)); ao(TV.x,TV.z,TV.w,TV.d,0.6);
-  rbox(132,76,3,1,TV.x,TV.h+46,TV.z+8,mat(0x0c0d10,0.35)); const scr=new THREE.Mesh(new THREE.PlaneGeometry(127,71), new THREE.MeshStandardMaterial({color:0x05070a, roughness:0.08, metalness:0.4, envMapIntensity:1.4})); scr.position.set(TV.x,TV.h+46,TV.z+6.3); scr.rotation.y=Math.PI; scene.add(scr);
+  rbox(132,76,3,1,TV.x,TV.h+46,TV.z+8,mat(0x0c0d10,0.35)); const scr=new THREE.Mesh(new THREE.PlaneGeometry(127,71.4), new THREE.MeshStandardMaterial({color:0x05070a, roughness:0.08, metalness:0.4, envMapIntensity:1.4})); scr.position.set(TV.x,TV.h+46,TV.z+6.3); scr.rotation.y=Math.PI; scene.add(scr); AD.tv=scr;
   box(44,3,18,TV.x,TV.h+2,TV.z+8,mat(0x0c0d10,0.35)); rbox(14,30,14,2,TV.x-78,TV.h+15,TV.z+4,fab(0x33363c,1.2)); rbox(14,30,14,2,TV.x+78,TV.h+15,TV.z+4,fab(0x33363c,1.2));
   // bibliothèque garnie
   const b=SHELF, bx=b.x; box(b.w,b.h,2,bx,b.h/2,b.z-b.d/2+1,oak); box(b.w,b.h,2,bx,b.h/2,b.z+b.d/2-1,oak); box(1.5,b.h,b.d,bx-b.w/2+0.8,b.h/2,b.z,oak);
@@ -624,7 +630,7 @@ const WINDOWS = [{x0:-228,x1:-72,y0:105,y1:215},{x0:160,x1:330,y0:8,y1:218}];
   const line=new THREE.Mesh(new THREE.PlaneGeometry(TRACK_HALF*2, 6), new THREE.MeshStandardMaterial({map:chk, roughness:0.8})); line.rotation.set(-Math.PI/2,0,ang); line.position.set(p0.x,0.54,p0.z); line.receiveShadow=true; scene.add(line);
   GATE.forEach((p,i)=>{ cyl(1,1,20,p.x,10,p.z, mat(i?0x2f9a4e:0xf2b90f, 0.4), scene, 6); cyl(0.05,1,2.6,p.x,21.3,p.z, mat(0xe8c9a0, 0.8), scene, 6); cyl(0.05,0.3,0.8,p.x,22.2,p.z, mat(0x2a2a2a,0.5), scene, 6); });
   const ban=canvasTex(512,96,(g,w,h)=>{ g.fillStyle='#c9302c'; g.fillRect(0,0,w,h); g.fillStyle='#fff'; g.fillRect(0,6,w,4); g.fillRect(0,h-10,w,4); g.font='bold 60px Fredoka, sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText('HOME RACING CLUB',w/2,h/2+3,w-40); });
-  const b=new THREE.Mesh(new THREE.BoxGeometry(TRACK_HALF*2+13, 6.5, 0.3), new THREE.MeshStandardMaterial({map:ban, roughness:0.75})); b.position.set(p0.x,16,p0.z); b.rotation.y=ang+Math.PI; b.castShadow=true; scene.add(b);
+  const b=new THREE.Mesh(new THREE.BoxGeometry(TRACK_HALF*2+13, 11, 0.3), new THREE.MeshStandardMaterial({map:ban, roughness:0.75})); b.position.set(p0.x,18.2,p0.z); AD.banniere=b; b.rotation.y=ang+Math.PI; b.castShadow=true; scene.add(b);
 })();
 
 // ---------- Les voitures ----------
@@ -825,6 +831,7 @@ function placeGrid(slot){ placeAt(0, 7+Math.floor(slot/2)*5+(slot%2)*2, slot%2?-
 function myProg(){ let i=car.idx; if(!started || (nextSec===1 && i>T.N/2)) i-=T.N; return lapTimes.length*T.N+i; }
 let myRes=null;
 function beginRace(){
+  stat('courses').then(v=>{ if(v && v.value>0){ statN=v.value; showStat(); } });
   initAudio(); if(actx && actx.state==='suspended') actx.resume().catch(()=>{});
   ['menu','lobby','end'].forEach(i=>$(i).style.display='none'); $('hud').style.display='block'; document.body.classList.add('racing');
   if(MOBILE && ctlMode==='tilt'){ tiltSeen=false; setTimeout(()=>{ if(ctlMode==='tilt' && !tiltSeen) setCtl('btn'); }, 4000); }
@@ -834,7 +841,7 @@ function beginRace(){
   state='count'; countT=3.2; if(net.mode==='host') initBots(); $('count').style.display='block'; $('lap').textContent='1'; $('time').textContent=fmt(0);
 }
 function finish(){
-  state='done'; doneT=0;
+  state='done'; doneT=0; stat('arrivees');
   const total=lapTimes.reduce((a,b)=>a+b,0), bl=Math.min(...lapTimes); let rec=false;
   if(!best || bl<best){ best=bl; rec=true; try{ localStorage.setItem('hrc_best_salon', String(bl)); }catch(e){} }
   myRes={total, best:bl, rec}; $('best').textContent=fmt(best);
@@ -1226,6 +1233,19 @@ var post = (()=>{
       comp.uniforms.b.value=rtA.texture; comp.uniforms.time.value=(performance.now()%1000)/1000; pass(comp,rtS,null); } };
 })();
 if(MOBILE) post.on=false;
+// ---------- Sponsors : les visuels listés dans assets/pub/pub.json sont posés sur la banderole, la télé, deux cadres et l'écran d'arrivée ----------
+let adEnd=null, statN=0;
+function showAdEnd(){ const a=$('adEnd'), f=adEnd&&(adEnd[LANG]||adEnd.fr); if(!f){ a.style.display='none'; return; } if(adEnd.lien) a.href=adEnd.lien; else a.removeAttribute('href'); a.firstChild.src='assets/pub/'+f; a.style.display='block'; }
+(function(){ const L=new THREE.TextureLoader(), base='assets/pub/';
+  try{ fetch(base+'pub.json').then(r=>r.json()).then(cfg=>{
+    ['banniere','tv','cadre43','cadre11'].forEach(k=>{ const m=AD[k]; if(!m || !cfg[k]) return; L.load(base+cfg[k], t=>{ t.encoding=THREE.sRGBEncoding; t.anisotropy=4;
+      if(k==='tv') m.material=new THREE.MeshBasicMaterial({map:t, color:0xd8d8d8}); else { m.material.map=t; m.material.color.set(0xffffff); m.material.needsUpdate=true; } }); });
+    adEnd=cfg.fin||null; showAdEnd(); }).catch(()=>{}); }catch(e){} })();
+// ---------- Compteur de parties (service gratuit Abacus : un simple nombre, aucune donnée personnelle) ----------
+const STAT_ON=!/^(localhost|127\.|$)/.test(location.hostname);
+function stat(key, read){ if(!STAT_ON) return Promise.resolve(null); try{ return fetch('https://abacus.jasoncameron.dev/'+(read?'get':'hit')+'/home-racing-club/'+key).then(r=>r.ok?r.json():null).catch(()=>null); }catch(e){ return Promise.resolve(null); } }
+function showStat(){ $('statLine').textContent=statN>0?statN.toLocaleString(LANG==='en'?'en-US':'fr-CH')+tr(' courses jouées'):''; }
+stat('courses',true).then(v=>{ if(v && v.value>0){ statN=v.value; showStat(); } });
 let startLit=-1, lastLapT=0;
 function tone(f,d,v){ try{ if(!actx || muted) return; const o=actx.createOscillator(), g=actx.createGain(); o.type='square'; o.frequency.value=f; g.gain.setValueAtTime(v,actx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+d); o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime+d+0.02); }catch(e){} }
 let last=performance.now(), acc=0; let fpsAcc=0, fpsN=0, qLevel=0;
