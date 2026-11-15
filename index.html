@@ -40,9 +40,9 @@
   .tb.on,.ts.on,#pad i.on{background:rgba(255,216,74,.6)}
   #pad{position:absolute;left:calc(14px + env(safe-area-inset-left));bottom:calc(16px + env(safe-area-inset-bottom));width:216px;height:104px;display:flex;gap:10px;pointer-events:auto}
   #pad i{flex:1;border-radius:24px;font-size:34px;pointer-events:none}
-  #bGas{right:calc(16px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));width:108px;height:108px;font-size:18px}
-  #bDrift{right:calc(24px + env(safe-area-inset-right));bottom:calc(134px + env(safe-area-inset-bottom));width:92px;height:92px}
-  #bBrake{right:calc(134px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));width:88px;height:88px;font-size:15px}
+  #bGas{right:calc(16px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));width:112px;height:100px;font-size:18px;border-radius:0 0 56px 56px;border-top-width:1px}
+  #bDrift{right:calc(16px + env(safe-area-inset-right));bottom:calc(116px + env(safe-area-inset-bottom));width:112px;height:86px;border-radius:56px 56px 0 0;border-bottom-width:1px}
+  #bBrake{right:calc(140px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));width:88px;height:88px;font-size:15px}
   #touch.tilt #pad{display:none}
   #tsBar{position:absolute;left:50%;top:calc(8px + env(safe-area-inset-top));transform:translateX(-50%);display:flex;gap:10px}
   .ts{width:42px;height:42px;border-radius:12px;font-size:20px}
@@ -122,7 +122,7 @@
       <kbd>◀ ▶</kbd><span>tourner (ou incliner le téléphone, selon le réglage)</span>
       <kbd>GAZ</kbd><span>maintenir pour accélérer, relâcher pour ralentir</span>
       <kbd>FREIN</kbd><span>freiner fort, puis marche arrière</span>
-      <kbd>DRIFT</kbd><span>maintenir en tournant (garde aussi les gaz), relâcher pour un petit turbo</span>
+      <kbd>DRIFT</kbd><span>glisser le pouce du GAZ vers le haut : on dérape en gardant les gaz, relâcher pour un petit turbo</span>
       <kbd>↺</kbd><span>replacer la voiture sur la piste</span>
     </div>
     <div class="keys k">
@@ -659,11 +659,13 @@ const tireM=(()=>{ // gomme : rainures autour du pneu, pavés et lamelles en bia
     k.lineWidth=5; k.beginPath(); k.moveTo(i*bw,H*0.22); k.lineTo(i*bw+bw*0.3,y0-2); k.stroke(); k.beginPath(); k.moveTo(i*bw,H*0.78); k.lineTo(i*bw+bw*0.3,y1+2); k.stroke(); });
   g.fillStyle='rgba(150,150,155,.5)'; g.font='bold 15px sans-serif'; for(let i=0;i<4;i++){ g.fillText('HOME RACING CLUB',30+i*256,H*0.11); g.fillText('HOME RACING CLUB',150+i*256,H*0.95); }
   return new THREE.MeshStandardMaterial({map:texFrom(c,true), normalMap:normalFromHeight(hc,3), normalScale:new THREE.Vector2(1.6,1.6), roughness:0.82, envMapIntensity:0.35}); })(), rimM=mat(0x15161a,0.5,{metalness:0.15,envMapIntensity:0.35}), rimBackM=mat(0x060607,0.8), glassM=new THREE.MeshStandardMaterial({color:0x030405, roughness:0.12, metalness:0, envMapIntensity:0.45, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2}), chromeM=mat(0x121316,0.55,{metalness:0.2}), floorM=new THREE.MeshBasicMaterial({color:0x08080a, side:THREE.DoubleSide}), pOff={side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2},
-  lightFM=new THREE.MeshBasicMaterial(Object.assign({color:0xfff4d2},pOff)), lightRM=new THREE.MeshBasicMaterial(Object.assign({color:0x4d0503},pOff)), grilleM=new THREE.MeshBasicMaterial(Object.assign({color:0x0b0b0d},pOff));
+  lightFM=new THREE.MeshBasicMaterial(Object.assign({color:0xfff4d2},pOff)), lightRM=new THREE.MeshBasicMaterial({color:0xff2414}), grilleM=new THREE.MeshBasicMaterial(Object.assign({color:0x0b0b0d},pOff));
 function makeCar(color, mine, name, slot){
-  const g=new THREE.Group(), body=new THREE.Group(), wheels=[], pivots=[], sparks=[]; g.add(body);
+  const g=new THREE.Group(), body=new THREE.Group(), wheels=[], pivots=[], sparks=[]; g.add(body); let lab=null;
   const geo=carGeo, paint=new THREE.MeshPhysicalMaterial({color, roughness:0.42, metalness:0.3, clearcoat:1, clearcoatRoughness:0.05, envMapIntensity:0.8, normalMap:flakeTex, normalScale:new THREE.Vector2(0.45,0.45), side:THREE.DoubleSide});
-  add(new THREE.Mesh(geo.low, paint), body); body.add(new THREE.Mesh(geo.glass, glassM), new THREE.Mesh(geo.lightF, lightFM), new THREE.Mesh(geo.lightR, lightRM), new THREE.Mesh(geo.grille, grilleM));
+  add(new THREE.Mesh(geo.low, paint), body); body.add(new THREE.Mesh(geo.glass, glassM), new THREE.Mesh(geo.lightF, lightFM), new THREE.Mesh(geo.grille, grilleM));
+  rbox(2.3,0.5,0.34,0.1,0,1.5,-4.14,chromeM,body,false); rbox(2.0,0.26,0.3,0.08,0,1.5,-4.24,lightRM,body,false);                                   // barre de feux arrière
+  rbox(3.7,0.12,0.95,0.05,0,2.78,-3.75,chromeM,body).rotation.x=-0.12; [-1.25,1.25].forEach(x=>box(0.12,0.95,0.6,x,2.3,-3.7,chromeM,body,false)); [-1.85,1.85].forEach(x=>box(0.08,0.5,1.0,x,2.86,-3.75,chromeM,body,false));   // aileron
   box(2.3,0.8,6.2,0,0.95,-0.3,chromeM,body,false); body.add(new THREE.Mesh(geo.floor, floorM));    // châssis et fond plat
   [[-1.72,geo.WZ[0]],[1.72,geo.WZ[0]],[-1.72,geo.WZ[1]],[1.72,geo.WZ[1]]].forEach(([x,z],i)=>{ const piv=new THREE.Group(); piv.position.set(x,1.1,z); g.add(piv);
     const w=new THREE.Mesh(wheelG, tireM); w.castShadow=true; piv.add(w); w.add(new THREE.Mesh(rimG, rimBackM)); w.add(new THREE.Mesh(spokeG, rimM));
@@ -671,10 +673,10 @@ function makeCar(color, mine, name, slot){
   if(mine){ [-1.8,1.8].forEach(x=>{ const sp=new THREE.Mesh(new THREE.SphereGeometry(0.7,8,6), new THREE.MeshBasicMaterial({color:0xffffff})); sp.position.set(x,0.5,-3.9); sp.visible=false; g.add(sp); sparks.push(sp); });
     const spot=new THREE.SpotLight(0xfff2cc, 0.9, 150, 0.5, 0.7, 1.2); spot.position.set(0,1.3,4.4); spot.target.position.set(0,0,40); g.add(spot, spot.target); }
   if(name){ const tex=canvasTex(256,64,(c,w,h)=>{ c.font='bold 38px Fredoka, sans-serif'; c.textAlign='center'; c.textBaseline='middle'; c.lineWidth=7; c.strokeStyle='rgba(15,16,24,.85)'; c.strokeText(name,w/2,h/2); c.fillStyle='#fff'; c.fillText(name,w/2,h/2); });
-    const lab=new THREE.Sprite(new THREE.SpriteMaterial({map:tex, transparent:true, depthWrite:false, fog:false})); lab.scale.set(10,2.5,1); lab.position.y=6.4; g.add(lab); }
+    lab=new THREE.Sprite(new THREE.SpriteMaterial({map:tex, transparent:true, depthWrite:false, fog:false})); lab.scale.set(10,2.5,1); lab.position.y=6.4; g.add(lab); }
   const sh=new THREE.Mesh(new THREE.PlaneGeometry(7.8,13.4), new THREE.MeshBasicMaterial({map:softRect, transparent:true, opacity:0.62, depthWrite:false, color:0x000000})); sh.rotation.x=-Math.PI/2; sh.position.y=0.07; sh.renderOrder=2; g.add(sh);
   g.position.y=0.45; scene.add(g);
-  return {g, body, wheels, pivots, sparks, paint};
+  return {g, body, wheels, pivots, sparks, paint, lab};
 }
 let my = makeCar(COLORS[0], true, null, 0), carG = my.g, bodyG = my.body, wheels = my.wheels, frontPivots = my.pivots, sparks = my.sparks, mySlotShown = 0;
 function setColor(slot){ slot%=8; if(slot===mySlotShown) return; scene.remove(my.g); my=makeCar(COLORS[slot], true, null, slot); carG=my.g; bodyG=my.body; wheels=my.wheels; frontPivots=my.pivots; sparks=my.sparks; mySlotShown=slot; }
@@ -754,7 +756,7 @@ if(MOBILE){
   // à partir de la liste complète des doigts posés (rien ne reste « coincé », même si un doigt glisse ou si le système annule un toucher).
   const pad=document.getElementById('pad'), pl=document.getElementById('pl'), pr=document.getElementById('pr');
   const btns=[...document.querySelectorAll('.tb')], own=new Map();
-  const hit=(x,y)=>{ let best=null, bd=1e9; btns.forEach(b=>{ const r=b.getBoundingClientRect(), d=Math.hypot(x-(r.left+r.width/2), y-(r.top+r.height/2))-r.width/2; if(d<bd){ bd=d; best=b; } }); return bd<34?best:null; };
+  const hit=(x,y)=>{ let best=null, bd=1e9; btns.forEach(b=>{ const r=b.getBoundingClientRect(), d=Math.max(r.left-x, x-r.right, r.top-y, y-r.bottom, 0); if(d<bd){ bd=d; best=b; } }); return bd<30?best:null; };
   const sync=e=>{ if(!document.body.classList.contains('racing')) return;
     const tg=e.target; if(tg && tg.closest && tg.closest('.overlay,#tsBar,#rot')) return;
     if(e.cancelable) e.preventDefault();
@@ -855,7 +857,7 @@ let botT=0;
 function stepBots(dt){
   if(net.mode!=='host' || !bots.length) return;
   const N=T.N, ds=T.length/N, prof=BOT_PROF[net.botLvl], on=state==='race'||state==='done'; if(on) botT+=dt;
-  const others=[], avoid=on && botT>2;
+  const others=[], avoid=on && botT>0.3;
   if(avoid){
     for(const b of bots) if(!b.done) others.push({id:b.id, pos:b.s, lat:b.lat, v:b.v});
     if(state==='race'){ const q=T.pts[car.idx]; others.push({id:'H', pos:car.idx, lat:(car.x-q.x)*q.tz-(car.z-q.z)*q.tx, v:Math.hypot(car.vx,car.vz)}); }
@@ -869,9 +871,11 @@ function stepBots(dt){
       let d=o.pos-b.s; d-=Math.round(d/N)*N; const gap=d*ds, dl=o.lat-b.lat, side=dl>0?-1:dl<0?1:(b.lane>=0?1:-1);
       if(gap>0 && gap<20 && Math.abs(dl)<5.5){ dodge+=side*(20-gap)/20; if(gap<9.5 && Math.abs(dl)<3.9) tv=Math.min(tv,o.v); }
       if(gap>9.5 && gap<48 && Math.abs(dl)<5 && o.v>60) tv*=1.05;
-      if(Math.abs(gap)<7.6 && Math.abs(dl)<3.8) b.lat+=side*(3.8-Math.abs(dl))*0.5*Math.min(1,10*dt); }
+      if(Math.abs(gap)<7.6 && Math.abs(dl)<3.8){ b.lat+=side*(3.8-Math.abs(dl))*0.5*Math.min(1,10*dt);
+        if(!(b.bump>0) && botT>2){ b.bump=1.6; b.v*=gap>0?0.88:0.96; b.slip=Math.max(b.slip,0.2+Math.min(0.4,Math.abs(b.v-o.v)/110)); b.kick=side*(2+Math.random()*3); } } }   // accrochage : perte de vitesse et écart
+    if(b.bump>0) b.bump-=dt; if(b.kick){ b.lat+=b.kick*Math.min(1,5*dt); b.kick*=Math.exp(-5*dt); if(Math.abs(b.kick)<0.05) b.kick=0; }
     b.dg=(b.dg||0)+(Math.max(-1.5,Math.min(1.5,dodge))*8-(b.dg||0))*Math.min(1,4*dt);
-    if(b.slip>0){ b.slip-=dt; tv*=0.6; } else if(on && Math.random()<dt*0.02*(3-net.botLvl)) b.slip=0.4+Math.random()*0.6;
+    if(b.slip>0){ b.slip-=dt; tv*=0.6; } else if(on && botT>4 && Math.random()<dt*0.03){ b.slip=0.35+Math.random()*0.6; b.kick=(Math.random()<0.5?-1:1)*(2+Math.random()*4); }   // petite faute : trop large, on lève le pied
     b.v+=Math.max(-BOT_BRK*dt, Math.min(150*dt, tv-b.v));
     const s0=b.s; b.s+=b.v*dt/ds;
     b.lat+=(Math.max(-24,Math.min(24,b.lane+4*Math.sin(b.ph+b.s*0.02)+b.dg))-b.lat)*Math.min(1,(0.7+2.5*Math.min(1,Math.abs(b.dg)/4))*dt);
@@ -976,6 +980,7 @@ function updateRemotes(dt){
     if(Math.hypot(tx-r.dx,tz-r.dz)>40){ r.dx=tx; r.dz=tz; r.dh=r.h; }
     r.dx+=(tx-r.dx)*k; r.dz+=(tz-r.dz)*k; let d=r.h-r.dh; d=Math.atan2(Math.sin(d),Math.cos(d)); r.dh+=d*k;
     const g=r.car.g; g.position.x=r.dx; g.position.z=r.dz; g.rotation.y=r.dh;
+    if(r.car.lab) r.car.lab.visible=(r.dx-car.x)*Math.sin(car.h)+(r.dz-car.z)*Math.cos(car.h)>4;   // le nom ne s'affiche que pour les voitures devant soi
     r.car.body.rotation.y+=(r.dr*0.32-r.car.body.rotation.y)*Math.min(1,8*dt);
     r.spin+=(r.vx*Math.sin(r.h)+r.vz*Math.cos(r.h))/1.1*dt; r.car.wheels.forEach(w=>w.rotation.x=r.spin); });
 }
@@ -1040,17 +1045,18 @@ function collide(){
 }
 // collisions souples entre voitures : chacun corrige sa propre voiture
 function collideCars(dt){
-  if(!net.remotes.size || raceT<2) return;
+  if(!net.remotes.size || raceT<0.3) return;
   const fx=Math.sin(car.h), fz=Math.cos(car.h);
   net.remotes.forEach((r,id)=>{
     const ex=car.x-r.dx, ez=car.z-r.dz; if(ex*ex+ez*ez>144 || net.results.some(x=>x.id===id)) return;
-    const rx=Math.sin(r.dh), rz=Math.cos(r.dh); let pen=0, nx=0, nz=0;
+    const rx=Math.sin(r.dh), rz=Math.cos(r.dh); let pen=0, nx=0, nz=0, ca=0;
     for(const a of [1.9,-1.9]) for(const b of [1.9,-1.9]){ const px=car.x+fx*a-(r.dx+rx*b), pz=car.z+fz*a-(r.dz+rz*b), d=Math.hypot(px,pz);
-      if(d>1e-3 && 3.7-d>pen){ pen=3.7-d; nx=px/d; nz=pz/d; } }
+      if(d>1e-3 && 3.7-d>pen){ pen=3.7-d; nx=px/d; nz=pz/d; ca=a; } }
     if(pen<=0) return;
-    const k=(r.bot?1:0.5)*Math.min(1,22*dt); car.x+=nx*pen*k; car.z+=nz*pen*k;
+    const k=(r.bot?1:0.5)*Math.min(1,45*dt); car.x+=nx*pen*k; car.z+=nz*pen*k;
     const vn=(car.vx-r.vx)*nx+(car.vz-r.vz)*nz;
-    if(vn<0){ const behind=-(nx*fx+nz*fz)>0.5, j=-vn*(behind?0.9:0.5); car.vx+=nx*j; car.vz+=nz*j; car.hit=Math.max(car.hit,Math.min(0.45,-vn/160)); }
+    if(vn<0){ const behind=-(nx*fx+nz*fz)>0.5, j=-vn*(behind?1.0:0.75); car.vx+=nx*j; car.vz+=nz*j; car.hit=Math.max(car.hit,Math.min(0.45,-vn/160));
+      if(-vn>14){ car.h+=Math.sign(ca)*(nx*fz-nz*fx)*Math.min(0.2,-vn/320); const sl=1-Math.min(0.1,-vn/900); car.vx*=sl; car.vz*=sl; } }   // un choc franc fait pivoter la voiture et coûte un peu de vitesse
   });
 }
 function step(dt){
