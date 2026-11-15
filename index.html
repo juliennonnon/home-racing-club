@@ -943,7 +943,7 @@ function stepBots(dt){
     if(lapsNow>Math.floor(s0/N) && lapsNow>=1){ b.bestLap=Math.min(b.bestLap,botT-b.lap0); b.lap0=botT;
       if(lapsNow>=LAPS && !b.done){ b.done=true; addResult(b.id, botT, b.bestLap); } }
     const j=((Math.floor(b.s)%N)+N)%N, fr=b.s-Math.floor(b.s), p=T.pts[j], q=T.pts[(j+1)%N];
-    const a=[b.id, p.x+(q.x-p.x)*fr+p.tz*b.lat, p.z+(q.z-p.z)*fr-p.tx*b.lat, Math.atan2(p.tx,p.tz), p.tx*b.v, p.tz*b.v, 0, b.s];
+    const a=[b.id, p.x+(q.x-p.x)*fr+p.tz*b.lat, p.z+(q.z-p.z)*fr-p.tx*b.lat, Math.atan2(p.tx,p.tz), p.tx*b.v, p.tz*b.v, 0, b.s, Math.round(performance.now())];
     net.last.set(b.id,a); setRemote(a);
   }
 }
@@ -992,7 +992,7 @@ function hostConn(c){
       let slot=0; while(net.players.some(p=>p.slot===slot)) slot++;
       net.conns.set(c.peer,c); net.players.push({id:c.peer,name:(String(d.name||'').trim()||'Pilote').slice(0,12),slot}); setBots(net.botN,net.botLvl); sendLobby();
     } else if(!net.conns.has(c.peer)) return;
-    else if(d.t==='s' && Array.isArray(d.s)){ const a=[c.peer].concat(d.s.slice(0,7)); net.last.set(c.peer,a); setRemote(a); }
+    else if(d.t==='s' && Array.isArray(d.s)){ const a=[c.peer].concat(d.s.slice(0,8)); net.last.set(c.peer,a); setRemote(a); }
     else if(d.t==='fin') addResult(c.peer, +d.total, +d.best);
   });
   c.on('close',()=>dropPlayer(c.peer)); c.on('error',()=>dropPlayer(c.peer));
@@ -1031,7 +1031,13 @@ function setRemote(a){
   const id=a[0], pl=net.players.find(p=>p.id===id); if(!pl || idle()) return;
   let r=net.remotes.get(id);
   if(!r){ r={car:makeCar(COLORS[pl.slot%8], false, pl.name, pl.slot), dx:+a[1], dz:+a[2], dh:+a[3], spin:0, bot:!!pl.bot, nidx:-1, col:'#'+COLORS[pl.slot%8].toString(16).padStart(6,'0')}; net.remotes.set(id,r); }
-  r.x=+a[1]; r.z=+a[2]; r.h=+a[3]; r.vx=+a[4]; r.vz=+a[5]; r.dr=+a[6]||0; r.prog=+a[7]||0; r.t=performance.now();
+  // Chaque état porte l'heure d'émission. L'hôte rediffuse les états des autres à son propre rythme : sans cette heure, un état déjà vu
+  // (ou vieux de quelques dizaines de ms) était pris pour tout neuf, et la voiture repartait en arrière avant de bondir — les saccades.
+  const now=performance.now(), ts=+a[8];
+  if(isFinite(ts) && ts>0){ if(ts===r.ts) return; if(r.ts!==undefined && ts<r.ts && r.ts-ts<5000) return; r.ts=ts;
+    const dlt=now-ts; r.off=(r.off===undefined || Math.abs(dlt-r.off)>2000)?dlt:Math.min(r.off+0.4,dlt); r.t=ts+r.off; }   // r.off : décalage d'horloge + plus court trajet observé
+  else r.t=now;
+  r.x=+a[1]; r.z=+a[2]; r.h=+a[3]; r.vx=+a[4]; r.vz=+a[5]; r.dr=+a[6]||0; r.prog=+a[7]||0;
 }
 function updateRemotes(dt){
   const now=performance.now(), k=1-Math.exp(-14*dt);
@@ -1054,7 +1060,7 @@ function netTick(dt){
   if(net.mode==='solo' || idle()) return;
   updateRemotes(dt);
   net.acc+=dt; if(net.acc>=1/15){ net.acc=0; const q=v=>Math.round(v*100)/100;
-    const st=[q(car.x),q(car.z),q(car.h),q(car.vx),q(car.vz),car.drift?car.dDir:0,myProg()];
+    const st=[q(car.x),q(car.z),q(car.h),q(car.vx),q(car.vz),car.drift?car.dDir:0,myProg(),Math.round(performance.now())];   // le dernier nombre est l'heure d'émission (horloge de l'émetteur)
     if(net.mode==='client'){ try{ net.hc&&net.hc.send({t:'s',s:st}); }catch(e){} }
     else bcast({t:'S',l:[['H'].concat(st)].concat(Array.from(net.last.values()))}); }
   net.rankAcc+=dt; if(net.rankAcc>=0.25){ net.rankAcc=0; const rk=ranking(), pos=rk.findIndex(p=>p.id===net.myId)+1;
