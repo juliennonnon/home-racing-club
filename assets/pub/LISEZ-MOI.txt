@@ -1,0 +1,14 @@
+EMPLACEMENTS SPONSORS — Home Racing Club
+Tout se règle dans pub.json (même dossier). Les images sont des JPEG placés ici.
+
+  banniere   bandeau ~6:1    arche de départ            (1024 x 166)
+  tv         16:9            écran de la télé           (768 x 432)
+  cadre43    4:3             cadre mur de droite        (640 x 480)
+  cadre34    3:4 portrait    cadre mur de droite        (480 x 640)
+  cadre11    carré           cadre mur de gauche        (512 x 512)
+  panneaux   4:3             8 pancartes au bord de la piste, numérotées 1 à 8
+                             dans l'ordre du tour, à partir de la ligne de départ
+  fin        16:9            écran d'arrivée (fr / en) + lien cliquable
+
+Pancartes : "defaut" s'applique à toutes ; pour en réserver une à une marque :
+  "panneaux": { "defaut": "4-3.jpg", "3": "marque.jpg", "5": "autre.jpg" }

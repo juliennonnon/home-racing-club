@@ -3,5 +3,7 @@
   "tv": "16-9.jpg",
   "cadre43": "4-3.jpg",
   "cadre11": "1-1.jpg",
+  "cadre34": "3-4.jpg",
+  "panneaux": { "defaut": "4-3.jpg" },
   "fin": { "fr": "fin_fr.jpg", "en": "fin_en.jpg", "lien": "https://juliennonnon.com" }
 }
