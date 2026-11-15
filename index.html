@@ -680,6 +680,8 @@ const carGeo=(()=>{ const L=4.3, NZ=64, NV=44, Y0=0.55, WR=1.24, WZ=[2.1,-2.4], 
   const fp=[], fi=[]; for(let i=0;i<=NZ;i++){ const z=-L*Math.cos(Math.PI*i/NZ); let w=halfW(z); if(WZ.some(zw=>Math.abs(z-zw)<WR+0.06)) w=Math.min(w,1.14); fp.push(-w,Y0+0.01,z, w,Y0+0.01,z); if(i<NZ){ const a=i*2; fi.push(a,a+1,a+2, a+1,a+3,a+2); } }
   const floor=new THREE.BufferGeometry(); floor.setAttribute('position',new THREE.Float32BufferAttribute(fp,3)); floor.setIndex(fi); floor.computeVertexNormals();
   return {low, glass:mergeGeo(glassParts), lightF:mergeGeo(lightF), lightR:mergeGeo(lightR), grille, floor, surf, halfW, L, WZ}; })();
+// carrosserie modélisée (fichier allégé tiré du modèle GLB) : chargée au démarrage ; en attendant ou en cas d'échec, la carrosserie calculée sert de repli
+const carModel={geo:null};
 // laque pailletée : sous le vernis lisse, de minuscules paillettes orientées au hasard accrochent la lumière
 const flakeTex=(()=>{ const n=128, c=cv(n,n), g=c.getContext('2d'), im=g.createImageData(n,n); for(let i=0;i<n*n;i++){ const a=rnd()*6.283, r=rnd()<0.35?rnd()*0.55:rnd()*0.12; im.data[i*4]=128+Math.cos(a)*r*127; im.data[i*4+1]=128+Math.sin(a)*r*127; im.data[i*4+2]=255; im.data[i*4+3]=255; }
   g.putImageData(im,0,0); const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.magFilter=THREE.NearestFilter; t.anisotropy=4; return t; })();
@@ -703,12 +705,14 @@ const tireM=(()=>{ // gomme : rainures autour du pneu, pavés et lamelles en bia
   lightFM=new THREE.MeshBasicMaterial(Object.assign({color:0xfff4d2},pOff)), lightRM=new THREE.MeshBasicMaterial({color:0xff2414}), grilleM=new THREE.MeshBasicMaterial(Object.assign({color:0x0b0b0d},pOff));
 function makeCar(color, mine, name, slot){
   const g=new THREE.Group(), body=new THREE.Group(), wheels=[], pivots=[], sparks=[]; g.add(body); let lab=null;
-  const geo=carGeo, paint=new THREE.MeshPhysicalMaterial({color, roughness:0.42, metalness:0.3, clearcoat:1, clearcoatRoughness:0.05, envMapIntensity:0.8, normalMap:flakeTex, normalScale:new THREE.Vector2(0.45,0.45), side:THREE.DoubleSide});
+  const geo=carGeo, MD=carModel.geo, paint=new THREE.MeshPhysicalMaterial({color, roughness:0.42, metalness:0.3, clearcoat:1, clearcoatRoughness:0.05, envMapIntensity:0.8, normalMap:flakeTex, normalScale:new THREE.Vector2(0.45,0.45), side:THREE.DoubleSide, vertexColors:!!MD});
+  if(MD){ add(new THREE.Mesh(MD, paint), body); body.add(new THREE.Mesh(carModel.glass, carModel.gm||(carModel.gm=new THREE.MeshStandardMaterial({color:0x040506, roughness:0.22, metalness:0, envMapIntensity:0.16, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2})))); box(2.2,0.7,6.6,0,0.75,0,chromeM,body,false); }   // carrosserie modélisée (assets/voiture.bin)
+  else {
   add(new THREE.Mesh(geo.low, paint), body); body.add(new THREE.Mesh(geo.glass, glassM), new THREE.Mesh(geo.lightF, lightFM), new THREE.Mesh(geo.grille, grilleM));
   rbox(2.3,0.5,0.34,0.1,0,1.5,-4.14,chromeM,body,false); rbox(2.0,0.26,0.3,0.08,0,1.5,-4.24,lightRM,body,false);                                   // barre de feux arrière
   rbox(3.7,0.12,0.95,0.05,0,2.78,-3.75,chromeM,body).rotation.x=-0.12; [-1.25,1.25].forEach(x=>box(0.12,0.95,0.6,x,2.3,-3.7,chromeM,body,false)); [-1.85,1.85].forEach(x=>box(0.08,0.5,1.0,x,2.86,-3.75,chromeM,body,false));   // aileron
-  box(2.3,0.8,6.2,0,0.95,-0.3,chromeM,body,false); body.add(new THREE.Mesh(geo.floor, floorM));    // châssis et fond plat
-  [[-1.72,geo.WZ[0]],[1.72,geo.WZ[0]],[-1.72,geo.WZ[1]],[1.72,geo.WZ[1]]].forEach(([x,z],i)=>{ const piv=new THREE.Group(); piv.position.set(x,1.1,z); g.add(piv);
+  box(2.3,0.8,6.2,0,0.95,-0.3,chromeM,body,false); body.add(new THREE.Mesh(geo.floor, floorM)); }   // châssis et fond plat
+  (MD?[[-1.85,2.335],[1.85,2.335],[-1.85,-2.29],[1.85,-2.29]]:[[-1.72,geo.WZ[0]],[1.72,geo.WZ[0]],[-1.72,geo.WZ[1]],[1.72,geo.WZ[1]]]).forEach(([x,z],i)=>{ const piv=new THREE.Group(); piv.position.set(x,MD?0.72:1.1,z); if(MD) piv.scale.setScalar(0.655); g.add(piv);
     const w=new THREE.Mesh(wheelG, tireM); w.castShadow=true; piv.add(w); w.add(new THREE.Mesh(rimG, rimBackM)); w.add(new THREE.Mesh(spokeG, rimM));
     wheels.push(w); if(i<2) pivots.push(piv); });
   if(mine){ [-1.8,1.8].forEach(x=>{ const sp=new THREE.Mesh(new THREE.SphereGeometry(0.7,8,6), new THREE.MeshBasicMaterial({color:0xffffff})); sp.position.set(x,0.5,-3.9); sp.visible=false; g.add(sp); sparks.push(sp); });
@@ -720,6 +724,12 @@ function makeCar(color, mine, name, slot){
   return {g, body, wheels, pivots, sparks, paint, lab};
 }
 let my = makeCar(COLORS[0], true, null, 0), carG = my.g, bodyG = my.body, wheels = my.wheels, frontPivots = my.pivots, sparks = my.sparks, mySlotShown = 0;
+try{ fetch('assets/voiture.bin').then(r=>{ if(!r.ok) throw 0; return r.arrayBuffer(); }).then(buf=>{ const hd=new Float32Array(buf,0,4), nv=hd[0], ni=hd[1], sc=hd[2], q=new Int16Array(buf,16,nv*3); let o=16+nv*6; o+=(4-o%4)%4; const nb=new Int8Array(buf,o,nv*3); o+=nv*3; o+=(4-o%4)%4; const cb=new Uint8Array(buf,o,nv); o+=nv; o+=(4-o%4)%4;
+    const P=new Float32Array(nv*3), Nn=new Float32Array(nv*3), C=new Float32Array(nv*3), U=new Float32Array(nv*2), K=[[1,1,1],[0.012,0.012,0.016],[0.03,0.03,0.036]];
+    for(let i=0;i<nv;i++){ for(let k=0;k<3;k++){ P[i*3+k]=q[i*3+k]*sc; Nn[i*3+k]=nb[i*3+k]/127; C[i*3+k]=K[cb[i]][k]; } U[i*2]=(P[i*3]+P[i*3+1]*0.7)/3.2; U[i*2+1]=P[i*3+2]/3.2; }
+    const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(P,3)); g.setAttribute('normal',new THREE.BufferAttribute(Nn,3)); g.setAttribute('color',new THREE.BufferAttribute(C,3)); g.setAttribute('uv',new THREE.BufferAttribute(U,2)); const ix=new Uint16Array(buf.slice(o,o+ni*2)), ip=[], ig=[]; for(let i=0;i<ni;i+=3) (cb[ix[i]]===1?ig:ip).push(ix[i],ix[i+1],ix[i+2]);   // les vitres forment une pièce à part (verre noir)
+    g.setIndex(ip); const gg=new THREE.BufferGeometry(); gg.setAttribute('position',g.attributes.position); gg.setAttribute('normal',g.attributes.normal); gg.setIndex(ig); carModel.glass=gg;
+    carModel.geo=g; const sl=mySlotShown; mySlotShown=-1; setColor(sl); net.remotes.forEach(r=>{ if(r.car && r.slot!==undefined){ /* les voitures déjà créées gardent leur forme jusqu'à la prochaine course */ } }); }).catch(()=>{}); }catch(e){}
 function setColor(slot){ slot%=8; if(slot===mySlotShown) return; scene.remove(my.g); my=makeCar(COLORS[slot], true, null, slot); carG=my.g; bodyG=my.body; wheels=my.wheels; frontPivots=my.pivots; sparks=my.sparks; mySlotShown=slot; }
 
 // ---------- Effets : fumée et traces de pneus au dérapage ----------
