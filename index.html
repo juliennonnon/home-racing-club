@@ -13,6 +13,14 @@
   #vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 58%,rgba(30,14,0,.34) 100%)}
   .pill{background:rgba(18,20,28,.62);border-radius:14px;padding:8px 14px;backdrop-filter:blur(4px)}
   #hud{position:fixed;inset:0;pointer-events:none;display:none}
+  #langSel{position:absolute;right:14px;top:12px;display:flex;gap:4px} .card{position:relative}
+  #langSel button{font:inherit;font-size:12px;font-weight:700;padding:3px 8px;border-radius:8px;border:1px solid rgba(255,255,255,.35);background:transparent;color:inherit;cursor:pointer;opacity:.6}
+  #langSel button.on{background:#ffd84a;color:#1b1d24;border-color:#ffd84a;opacity:1}
+  #lights{position:absolute;left:50%;top:9%;transform:translateX(-50%);display:none;gap:10px;padding:10px 14px;border-radius:16px;background:#15161a;box-shadow:0 6px 0 rgba(0,0,0,.35)}
+  #lights i{width:34px;height:34px;border-radius:50%;background:#3a1512;box-shadow:inset 0 -4px 6px rgba(0,0,0,.5)}
+  #lights i.r{background:#ff2a1a;box-shadow:0 0 18px #ff2a1a, inset 0 -4px 6px rgba(0,0,0,.25)} #lights i.g{background:#35e06a;box-shadow:0 0 18px #35e06a, inset 0 -4px 6px rgba(0,0,0,.25)}
+  body.mob #lights{top:16%;gap:7px;padding:7px 10px} body.mob #lights i{width:24px;height:24px}
+  #msg.big{font-size:54px;top:33%;color:#fff} body.mob #msg.big{font-size:36px}
   #lines{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
   #info{position:absolute;left:14px;top:14px;font-size:17px;line-height:1.45}
   #info b{font-size:26px}
@@ -90,71 +98,73 @@
 
 <canvas id="lines" width="640" height="360"></canvas>
 <div id="hud">
-  <div id="info" class="pill">Tour <b id="lap">1</b>/<span id="laps">3</span><br><span id="time">0:00.00</span><br><small>Meilleur tour : <span id="best">—</span></small></div>
+  <div id="info" class="pill"><span data-i>Tour</span> <b id="lap">1</b>/<span id="laps">3</span><br><span id="time">0:00.00</span><br><small><span data-i>Meilleur tour :</span> <span id="best">—</span></small></div>
   <canvas id="map" width="186" height="134"></canvas>
   <div id="msg"></div>
   <div id="count"></div>
+  <div id="lights"><i></i><i></i><i></i><i></i><i></i></div>
   <div id="speed" class="pill"><b id="kmh">0</b>km/h</div>
   <div id="rank" class="pill"></div>
-  <div id="help" class="pill"><b>R</b> replacer la voiture · <b>M</b> couper le son</div>
+  <div id="help" class="pill" data-i><b>R</b> replacer la voiture · <b>M</b> couper le son</div>
 </div>
 
 <div id="touch">
   <div id="pad"><i id="pl">◀</i><i id="pr">▶</i></div>
   <div class="tb" id="bDrift" data-k="drift">DRIFT</div>
-  <div class="tb" id="bGas" data-k="gas">GAZ</div>
-  <div class="tb" id="bBrake" data-k="down">FREIN</div>
+  <div class="tb" id="bGas" data-k="gas" data-i>GAZ</div>
+  <div class="tb" id="bBrake" data-k="down" data-i>FREIN</div>
   <div id="tsBar"><div class="ts" id="bResp">↺</div><div class="ts" id="bMute">♪</div></div>
 </div>
-<div id="rot">Tourne ton téléphone à l'horizontale<br>pour piloter 🔄</div>
+<div id="rot" data-i>Tourne ton téléphone à l'horizontale<br>pour piloter 🔄</div>
 
 <div id="menu" class="overlay">
   <div class="card">
+    <div id="langSel"><button data-l="fr">FR</button><button data-l="en">EN</button></div>
     <h1>Home <span>Racing Club</span></h1>
-    <p>Course de mini-voitures dans le salon · jusqu'à 8 joueurs</p>
-    <input id="nameIn" class="in" maxlength="12" placeholder="Ton pseudo" autocomplete="off">
-    <div class="row"><button class="go" id="hostBtn">Créer une partie</button></div>
-    <div class="row"><input id="codeIn" class="in code" maxlength="4" placeholder="CODE" autocomplete="off"><button class="go alt" id="joinBtn">Rejoindre</button></div>
-    <div class="row"><button class="go ghost" id="startBtn">Jouer en solo</button></div>
-    <div class="row opt">Robots <select id="botN" class="in sel"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select> Niveau <select id="botLvl" class="in sel"><option value="0">Facile</option><option value="1" selected>Moyen</option><option value="2">Difficile</option></select></div>
-    <div class="row opt" id="ctlRow">Commandes <select id="ctlSel" class="in sel"><option value="btn">Boutons</option><option value="tilt">Incliner le téléphone</option></select></div>
+    <p data-i>Course de mini-voitures dans le salon · jusqu'à 8 joueurs</p>
+    <input id="nameIn" class="in" maxlength="12" placeholder="Ton pseudo" data-ip autocomplete="off">
+    <div class="row"><button class="go" id="hostBtn" data-i>Créer une partie</button></div>
+    <div class="row"><input id="codeIn" class="in code" maxlength="4" placeholder="CODE" autocomplete="off"><button class="go alt" id="joinBtn" data-i>Rejoindre</button></div>
+    <div class="row"><button class="go ghost" id="startBtn" data-i>Jouer en solo</button></div>
+    <div class="row opt"><span data-i>Robots</span> <select id="botN" class="in sel"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select> <span data-i>Niveau</span> <select id="botLvl" class="in sel"><option value="0" data-i>Facile</option><option value="1" selected data-i>Moyen</option><option value="2" data-i>Difficile</option></select></div>
+    <div class="row opt" id="ctlRow"><span data-i>Commandes</span> <select id="ctlSel" class="in sel"><option value="btn" data-i>Boutons</option><option value="tilt" data-i>Incliner le téléphone</option></select></div>
     <p id="menuMsg" class="msg"></p>
-    <details><summary>Commandes</summary>
+    <details><summary data-i>Commandes</summary>
     <div class="keys t">
-      <kbd>◀ ▶</kbd><span>tourner (ou incliner le téléphone, selon le réglage)</span>
-      <kbd>GAZ</kbd><span>maintenir pour accélérer, relâcher pour ralentir</span>
-      <kbd>FREIN</kbd><span>freiner fort, puis marche arrière</span>
-      <kbd>DRIFT</kbd><span>glisser le pouce du GAZ vers le haut : on dérape en gardant les gaz, relâcher pour un petit turbo</span>
-      <kbd>↺</kbd><span>replacer la voiture sur la piste</span>
+      <kbd>◀ ▶</kbd><span data-i>tourner (ou incliner le téléphone, selon le réglage)</span>
+      <kbd data-i>GAZ</kbd><span data-i>maintenir pour accélérer, relâcher pour ralentir</span>
+      <kbd data-i>FREIN</kbd><span data-i>freiner fort, puis marche arrière</span>
+      <kbd>DRIFT</kbd><span data-i>glisser le pouce du GAZ vers le haut : on dérape en gardant les gaz, relâcher pour un petit turbo</span>
+      <kbd>↺</kbd><span data-i>replacer la voiture sur la piste</span>
     </div>
     <div class="keys k">
-      <kbd>↑ ↓ ← →</kbd><span>ou W A S D : accélérer, freiner, tourner</span>
-      <kbd>Espace</kbd><span>dérapage (maintenir en tournant, relâcher pour un petit turbo)</span>
-      <kbd>R</kbd><span>replacer la voiture sur la piste</span>
+      <kbd>↑ ↓ ← →</kbd><span data-i>ou W A S D : accélérer, freiner, tourner</span>
+      <kbd data-i>Espace</kbd><span data-i>dérapage (maintenir en tournant, relâcher pour un petit turbo)</span>
+      <kbd>R</kbd><span data-i>replacer la voiture sur la piste</span>
     </div></details>
   </div>
 </div>
 
 <div id="lobby" class="overlay" style="display:none">
   <div class="card">
-    <h1>Salon <span id="lobbyCode"></span></h1>
+    <h1><span data-i style="color:inherit">Salon</span> <span id="lobbyCode"></span></h1>
     <p id="lobbyHint"></p>
     <div id="plist"></div>
-    <div class="row opt" id="lobbyBots">Robots <select id="lbotN" class="in sel"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select> Niveau <select id="lbotLvl" class="in sel"><option value="0">Facile</option><option value="1" selected>Moyen</option><option value="2">Difficile</option></select></div>
-    <button class="go" id="launchBtn">Lancer la course</button>
-    <p id="lobbyWait">En attente du lancement par l'hôte…</p>
-    <div class="row"><button class="go ghost" id="leaveBtn">Quitter</button></div>
+    <div class="row opt" id="lobbyBots"><span data-i>Robots</span> <select id="lbotN" class="in sel"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select> <span data-i>Niveau</span> <select id="lbotLvl" class="in sel"><option value="0" data-i>Facile</option><option value="1" selected data-i>Moyen</option><option value="2" data-i>Difficile</option></select></div>
+    <button class="go" id="launchBtn" data-i>Lancer la course</button>
+    <p id="lobbyWait" data-i>En attente du lancement par l'hôte…</p>
+    <div class="row"><button class="go ghost" id="leaveBtn" data-i>Quitter</button></div>
   </div>
 </div>
 
 <div id="end" class="overlay" style="display:none">
   <div class="card">
-    <h1>Arrivée <span>!</span></h1>
-    <p>Ton temps : <b id="total"></b></p>
+    <h1 data-i>Arrivée <span>!</span></h1>
+    <p><span data-i>Ton temps :</span> <b id="total"></b></p>
     <table class="laps" id="lapTable"></table>
     <p id="record"></p>
     <button class="go" id="againBtn">Rejouer</button>
-    <div class="row"><button class="go ghost" id="quitBtn">Menu principal</button></div>
+    <div class="row"><button class="go ghost" id="quitBtn" data-i>Menu principal</button></div>
   </div>
 </div>
 
@@ -231,6 +241,16 @@ SLIPPERS.forEach(s=>BOXES.push({x:s.x,z:s.z,hw:5,hd:13,rot:s.rot}));
 
 // ---------- Rendu ----------
 const canvas = document.getElementById('c');
+// ---------- Langue : français ou anglais (les textes français servent de clés) ----------
+const EN={"Tour": "Lap", "Meilleur tour :": "Best lap:", "<b>R</b> replacer la voiture · <b>M</b> couper le son": "<b>R</b> reset the car · <b>M</b> mute", "GAZ": "GAS", "FREIN": "BRAKE", "Tourne ton téléphone à l'horizontale<br>pour piloter 🔄": "Turn your phone sideways<br>to drive 🔄", "Course de mini-voitures dans le salon · jusqu'à 8 joueurs": "Mini car racing in the living room · up to 8 players", "Ton pseudo": "Your nickname", "Créer une partie": "Create a game", "Rejoindre": "Join", "Jouer en solo": "Play solo", "Robots": "Bots", "Niveau": "Level", "Facile": "Easy", "Moyen": "Medium", "Difficile": "Hard", "Boutons": "Buttons", "Incliner le téléphone": "Tilt the phone", "Commandes": "Controls", "tourner (ou incliner le téléphone, selon le réglage)": "steer (or tilt the phone, depending on the setting)", "maintenir pour accélérer, relâcher pour ralentir": "hold to accelerate, release to slow down", "freiner fort, puis marche arrière": "brake hard, then reverse", "glisser le pouce du GAZ vers le haut : on dérape en gardant les gaz, relâcher pour un petit turbo": "slide your thumb up from GAS: you drift while keeping the throttle, release for a small boost", "replacer la voiture sur la piste": "put the car back on the track", "ou W A S D : accélérer, freiner, tourner": "or W A S D: accelerate, brake, steer", "Espace": "Space", "dérapage (maintenir en tournant, relâcher pour un petit turbo)": "drift (hold while turning, release for a small boost)", "Salon": "Lobby", "Lancer la course": "Start the race", "En attente du lancement par l'hôte…": "Waiting for the host to start…", "Quitter": "Leave", "Arrivée <span>!</span>": "Finish<span>!</span>", "Ton temps :": "Your time:", "Rejouer": "Play again", "Menu principal": "Main menu", "Nouveau record du tour : ": "New lap record: ", "Ton record du tour : ": "Your lap record: ", " (toi)": " (you)", "en course…": "racing…", "Retour au salon": "Back to lobby", " · L'hôte relance la partie depuis le salon.": " · The host restarts the game from the lobby.", "Donne ce code aux autres joueurs": "Give this code to the other players", "Tu es dans la partie": "You are in the game", " · robot": " · bot", " · hôte": " · host", "Le mode réseau est indisponible sur cette page.": "Network play is unavailable on this page.", "Création de la partie…": "Creating the game…", "Impossible de créer la partie (": "Could not create the game (", "). Vérifie ta connexion ou coupe ton VPN.": "). Check your connection or turn off your VPN.", "erreur": "error", "Entre le code à 4 lettres de la partie.": "Enter the game's 4-letter code.", "Connexion à la partie ": "Connecting to game ", "Pas de réponse. Vérifie le code, et coupe ton VPN si tu en as un.": "No answer. Check the code, and turn off your VPN if you use one.", "L'hôte a quitté la partie.": "The host left the game.", "Connexion impossible.": "Could not connect.", "Aucune partie avec ce code.": "No game with this code.", "Erreur de connexion (": "Connection error (", "La partie est complète (8 joueurs).": "The game is full (8 players).", "La course est déjà lancée, réessaie dans un instant.": "The race has already started, try again in a moment.", "Demi-tour !": "Wrong way!", "Turbo !": "Boost!", "GO !": "GO!", "Dernier tour !": "Final lap!", "Pilote": "Driver"};
+let LANG='fr'; try{ LANG=localStorage.getItem('hrc_lang')||((navigator.language||'fr').toLowerCase().startsWith('fr')?'fr':'en'); }catch(e){}
+const tr=t=>(LANG==='en' && EN[t]!==undefined)?EN[t]:t;
+function applyLang(l){ if(l){ LANG=l; try{ localStorage.setItem('hrc_lang',l); }catch(e){} } document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-i]').forEach(e=>{ if(e._fr===undefined) e._fr=e.innerHTML; e.innerHTML=tr(e._fr); });
+  document.querySelectorAll('[data-ip]').forEach(e=>{ if(e._fr===undefined) e._fr=e.placeholder; e.placeholder=tr(e._fr); });
+  document.querySelectorAll('#langSel button').forEach(b=>b.classList.toggle('on',b.dataset.l===LANG));
+  try{ if(state==='lobby') renderLobby(); }catch(e){} }
+document.querySelectorAll('#langSel button').forEach(b=>b.addEventListener('click',()=>applyLang(b.dataset.l))); applyLang();
 // Téléphone ou tablette : commandes tactiles et rendu allégé (forçable avec ?mobile=1 ou ?mobile=0)
 const MOBILE = /[?&]mobile=1/.test(location.search) || (!/[?&]mobile=0/.test(location.search) && !!window.matchMedia && matchMedia('(pointer:coarse)').matches && navigator.maxTouchPoints>0);
 if(MOBILE) document.body.classList.add('mob');
@@ -825,16 +845,16 @@ function finish(){
 function renderEnd(){
   if(!myRes) return;
   $('total').textContent=fmt(myRes.total);
-  $('record').textContent=myRes.rec?'Nouveau record du tour : '+fmt(myRes.best)+' !':'Ton record du tour : '+fmt(best);
+  $('record').textContent=myRes.rec?tr('Nouveau record du tour : ')+fmt(myRes.best)+' !':tr('Ton record du tour : ')+fmt(best);
   const again=$('againBtn');
   if(net.mode==='solo'){
-    $('lapTable').innerHTML=lapTimes.map((t,i)=>`<tr><td>Tour ${i+1}</td><td><b>${fmt(t)}</b>${t===myRes.best?' ★':''}</td></tr>`).join('');
-    again.style.display=''; again.textContent='Rejouer';
+    $('lapTable').innerHTML=lapTimes.map((t,i)=>`<tr><td>${tr('Tour')} ${i+1}</td><td><b>${fmt(t)}</b>${t===myRes.best?' ★':''}</td></tr>`).join('');
+    again.style.display=''; again.textContent=tr('Rejouer');
   } else {
     $('lapTable').innerHTML=ranking().map((p,i)=>{ const r=net.results.find(x=>x.id===p.id);
-      return `<tr><td>${i+1}.</td><td style="text-align:left"><i class="dot" style="background:#${COLORS[p.slot%8].toString(16).padStart(6,'0')}"></i>${esc(p.name)}${p.id===net.myId?' (toi)':''}</td><td><b>${r?fmt(r.total):'en course…'}</b></td></tr>`; }).join('');
-    again.style.display=net.mode==='host'?'':'none'; again.textContent=net.local?'Rejouer':'Retour au salon';
-    if(net.mode==='client') $('record').textContent+=" · L'hôte relance la partie depuis le salon.";
+      return `<tr><td>${i+1}.</td><td style="text-align:left"><i class="dot" style="background:#${COLORS[p.slot%8].toString(16).padStart(6,'0')}"></i>${esc(p.name)}${p.id===net.myId?tr(' (toi)'):''}</td><td><b>${r?fmt(r.total):tr('en course…')}</b></td></tr>`; }).join('');
+    again.style.display=net.mode==='host'?'':'none'; again.textContent=net.local?tr('Rejouer'):tr('Retour au salon');
+    if(net.mode==='client') $('record').textContent+=tr(" · L'hôte relance la partie depuis le salon.");
   }
 }
 
@@ -895,34 +915,34 @@ function stepBots(dt){
 const PREFIX='hrc1-', MAXP=8;
 const net={mode:'solo', peer:null, conns:new Map(), hc:null, myId:'H', code:'', players:[], remotes:new Map(), results:[], last:new Map(), acc:0, rankAcc:0, local:false, botN:0, botLvl:1};
 const PeerClass=()=>window.PeerImpl||window.Peer;
-const myName=()=>($('nameIn').value.trim()||'Pilote').slice(0,12);
+const myName=()=>($('nameIn').value.trim()||tr('Pilote')).slice(0,12);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const mySlot=()=>{ const p=net.players.find(p=>p.id===net.myId); return p?p.slot:0; };
 const menuMsg=m=>{ $('menuMsg').textContent=m||''; };
 function clearRemotes(){ net.remotes.forEach(r=>scene.remove(r.car.g)); net.remotes.clear(); }
 function netReset(){ const p=net.peer; net.peer=null; try{ p&&p.destroy(); }catch(e){}
   net.conns.clear(); net.hc=null; net.players=[]; net.results=[]; net.last.clear(); clearRemotes(); net.mode='solo'; net.myId='H'; net.code=''; net.local=false; net.botN=0; bots.length=0; }
-function toMenu(msg){ netReset(); state='menu'; drawSpeedLines(); document.body.classList.remove('racing'); ['lobby','end','hud'].forEach(i=>$(i).style.display='none'); $('count').style.display='none';
+function toMenu(msg){ netReset(); state='menu'; drawSpeedLines(); document.body.classList.remove('racing'); ['lobby','end','hud'].forEach(i=>$(i).style.display='none'); $('count').style.display='none'; $('lights').style.display='none';
   $('menu').style.display='flex'; menuMsg(msg); setColor(0); placeAt(0,7); }
 function showLobby(){ state='lobby'; drawSpeedLines(); document.body.classList.remove('racing'); ['menu','end','hud'].forEach(i=>$(i).style.display='none'); $('lobby').style.display='flex'; setColor(mySlot()); placeGrid(mySlot()); renderLobby(); }
 function goLobby(){ clearRemotes(); net.results=[]; net.last.clear(); showLobby(); }
 function renderLobby(){
   $('lobbyCode').textContent=net.code; const host=net.mode==='host';
-  $('lobbyHint').textContent=host?'Donne ce code aux autres joueurs':'Tu es dans la partie';
-  $('plist').innerHTML=net.players.slice().sort((a,b)=>a.slot-b.slot).map(p=>`<div><i class="dot" style="background:#${COLORS[p.slot%8].toString(16).padStart(6,'0')}"></i>${esc(p.name)}${p.bot?' · robot':''}${p.id==='H'?' · hôte':''}${p.id===net.myId?' (toi)':''}</div>`).join('');
+  $('lobbyHint').textContent=host?tr('Donne ce code aux autres joueurs'):tr('Tu es dans la partie');
+  $('plist').innerHTML=net.players.slice().sort((a,b)=>a.slot-b.slot).map(p=>`<div><i class="dot" style="background:#${COLORS[p.slot%8].toString(16).padStart(6,'0')}"></i>${esc(p.name)}${p.bot?tr(' · robot'):''}${p.id==='H'?tr(' · hôte'):''}${p.id===net.myId?tr(' (toi)'):''}</div>`).join('');
   $('launchBtn').style.display=host?'':'none'; $('lobbyWait').style.display=host?'none':''; $('lobbyBots').style.display=host?'':'none';
   if(host){ $('lbotN').value=String(net.botN); $('lbotLvl').value=String(net.botLvl); }
 }
 function hostCreate(tries){
-  tries=tries||0; if(!PeerClass()){ menuMsg('Le mode réseau est indisponible sur cette page.'); return; }
-  netReset(); menuMsg('Création de la partie…');
+  tries=tries||0; if(!PeerClass()){ menuMsg(tr('Le mode réseau est indisponible sur cette page.')); return; }
+  netReset(); menuMsg(tr('Création de la partie…'));
   const code=Array.from({length:4},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random()*24)]).join('');
   const peer=net.peer=new (PeerClass())(PREFIX+code);
   peer.on('open',()=>{ if(net.peer!==peer) return; net.mode='host'; net.code=code; net.myId='H'; net.players=[{id:'H',name:myName(),slot:0}]; setBots(+$('botN').value,+$('botLvl').value); menuMsg(''); showLobby(); });
   peer.on('connection',c=>hostConn(c));
   peer.on('error',e=>{ if(net.peer!==peer) return; const ty=e&&e.type;
     if(ty==='unavailable-id' && tries<4) hostCreate(tries+1);
-    else if(net.mode!=='host') toMenu('Impossible de créer la partie ('+(ty||'erreur')+'). Vérifie ta connexion ou coupe ton VPN.'); });
+    else if(net.mode!=='host') toMenu(tr('Impossible de créer la partie (')+(ty||tr('erreur'))+tr('). Vérifie ta connexion ou coupe ton VPN.')); });
   peer.on('disconnected',()=>{ try{ if(net.peer===peer) peer.reconnect(); }catch(e){} });
 }
 function hostConn(c){
@@ -948,21 +968,21 @@ function hostStart(){ if(net.mode!=='host'||state!=='lobby') return; net.results
 function addResult(id,total,bl){ if(!isFinite(total)||net.results.find(r=>r.id===id)) return; const p=net.players.find(p=>p.id===id);
   net.results.push({id,name:p?p.name:'?',total,best:bl}); net.results.sort((a,b)=>a.total-b.total); bcast({t:'res',r:net.results}); if(state==='done') renderEnd(); }
 function joinGame(){
-  const code=$('codeIn').value.trim().toUpperCase(); if(!/^[A-Z]{4}$/.test(code)){ menuMsg('Entre le code à 4 lettres de la partie.'); return; }
-  if(!PeerClass()){ menuMsg('Le mode réseau est indisponible sur cette page.'); return; }
-  netReset(); menuMsg('Connexion à la partie '+code+'…');
+  const code=$('codeIn').value.trim().toUpperCase(); if(!/^[A-Z]{4}$/.test(code)){ menuMsg(tr('Entre le code à 4 lettres de la partie.')); return; }
+  if(!PeerClass()){ menuMsg(tr('Le mode réseau est indisponible sur cette page.')); return; }
+  netReset(); menuMsg(tr('Connexion à la partie ')+code+'…');
   const peer=net.peer=new (PeerClass())(); let ok=false;
-  setTimeout(()=>{ if(!ok && net.peer===peer) toMenu('Pas de réponse. Vérifie le code, et coupe ton VPN si tu en as un.'); }, 12000);
+  setTimeout(()=>{ if(!ok && net.peer===peer) toMenu(tr('Pas de réponse. Vérifie le code, et coupe ton VPN si tu en as un.')); }, 12000);
   peer.on('open',()=>{ if(net.peer!==peer) return; const c=net.hc=peer.connect(PREFIX+code,{reliable:true});
     c.on('open',()=>{ try{c.send({t:'hello',name:myName()});}catch(e){} });
     c.on('data',d=>{ if(net.peer!==peer) return; ok=true; clientData(d); });
-    c.on('close',()=>{ if(net.peer===peer) toMenu(ok?"L'hôte a quitté la partie.":'Connexion impossible.'); }); });
-  peer.on('error',e=>{ if(net.peer!==peer) return; const ty=e&&e.type; toMenu(ty==='peer-unavailable'?'Aucune partie avec ce code.':'Erreur de connexion ('+(ty||'?')+').'); });
+    c.on('close',()=>{ if(net.peer===peer) toMenu(ok?tr("L'hôte a quitté la partie."):tr('Connexion impossible.')); }); });
+  peer.on('error',e=>{ if(net.peer!==peer) return; const ty=e&&e.type; toMenu(ty==='peer-unavailable'?tr('Aucune partie avec ce code.'):tr('Erreur de connexion (')+(ty||'?')+').'); });
 }
 function clientData(d){ if(!d||typeof d!=='object') return;
   if(d.t==='lobby'){ net.mode='client'; net.code=String(d.code||''); net.myId=d.you; net.players=Array.isArray(d.players)?d.players:[];
     if(state==='menu'){ menuMsg(''); showLobby(); } else { renderLobby(); if(state==='done') renderEnd(); } }
-  else if(d.t==='no') toMenu(d.why==='full'?'La partie est complète (8 joueurs).':'La course est déjà lancée, réessaie dans un instant.');
+  else if(d.t==='no') toMenu(d.why==='full'?tr('La partie est complète (8 joueurs).'):tr('La course est déjà lancée, réessaie dans un instant.'));
   else if(d.t==='start'){ if(net.mode==='client') beginRace(); }
   else if(d.t==='S' && Array.isArray(d.l)){ const seen=new Set(); d.l.forEach(a=>{ if(Array.isArray(a) && a[0]!==net.myId){ seen.add(a[0]); setRemote(a); } });
     net.remotes.forEach((r,id)=>{ if(!seen.has(id)){ scene.remove(r.car.g); net.remotes.delete(id); } }); }
@@ -1000,7 +1020,7 @@ function netTick(dt){
     if(net.mode==='client'){ try{ net.hc&&net.hc.send({t:'s',s:st}); }catch(e){} }
     else bcast({t:'S',l:[['H'].concat(st)].concat(Array.from(net.last.values()))}); }
   net.rankAcc+=dt; if(net.rankAcc>=0.25){ net.rankAcc=0; const rk=ranking(), pos=rk.findIndex(p=>p.id===net.myId)+1;
-    $('rank').innerHTML='<b>'+pos+'</b><small>'+(pos===1?'er':'e')+'</small> / '+rk.length+'<br>'+rk.map((p,i)=>`<span class="${p.id===net.myId?'me':''}">${i+1}. ${esc(p.name)}</span>`).join('<br>'); }
+    $('rank').innerHTML='<b>'+pos+'</b><small>'+(LANG==='en'?(['th','st','nd','rd'][pos]||'th'):(pos===1?'er':'e'))+'</small> / '+rk.length+'<br>'+rk.map((p,i)=>`<span class="${p.id===net.myId?'me':''}">${i+1}. ${esc(p.name)}</span>`).join('<br>'); }
 }
 $('startBtn').addEventListener('click',()=>{ netReset(); const n=+$('botN').value;
   if(n>0){ net.mode='host'; net.local=true; net.players=[{id:'H',name:myName(),slot:0}]; setBots(n,+$('botLvl').value); }
@@ -1096,7 +1116,8 @@ function step(dt){
     const p=T.pts[idx], along=car.vx*p.tx+car.vz*p.tz; wrongT=(along<-30 && car.onTrack)?wrongT+dt:0;
     const sec=Math.floor(idx/T.N*SECTORS);
     if(sec===nextSec && dist<TRACK_HALF+12){
-      if(sec===0){ if(started){ lapTimes.push(raceT-lapStart); lapStart=raceT; if(lapTimes.length>=LAPS){ finish(); return; } } started=true; }
+      if(sec===0){ if(started){ lapTimes.push(raceT-lapStart); lapStart=raceT; if(lapTimes.length>=LAPS){ finish(); return; }
+        if(lapTimes.length===LAPS-1){ lastLapT=3; [0,0.16,0.32].forEach((d,k)=>setTimeout(()=>tone(660+k*220,0.16,0.16),d*1000)); } } started=true; }
       nextSec=(nextSec+1)%SECTORS; respawnIdx=idx;
     }
   }
@@ -1149,7 +1170,8 @@ function updateHud(){
   $('kmh').textContent=Math.round(sp*0.62);
   if(state==='race'){ $('time').textContent=fmt(raceT-lapStart); $('lap').textContent=Math.min(LAPS, lapTimes.length+1); }
   const msg=$('msg'); let m='';
-  if(state==='race'){ if(wrongT>0.8) m='Demi-tour !'; else if(car.boost>0) m='Turbo !'; }
+  if(state==='race'){ if(wrongT>0.8) m=tr('Demi-tour !'); else if(lastLapT>0) m=tr('Dernier tour !'); else if(car.boost>0) m=tr('Turbo !'); }
+  msg.classList.toggle('big', lastLapT>0 && !(wrongT>0.8)); if(lastLapT>0) lastLapT-=1/60;
   drawSpeedLines();
   msg.textContent=m; msg.style.display=m?'block':'none';
   mg.clearRect(0,0,mapC.width,mapC.height); mg.drawImage(mapBg,0,0);
@@ -1204,13 +1226,16 @@ var post = (()=>{
       comp.uniforms.b.value=rtA.texture; comp.uniforms.time.value=(performance.now()%1000)/1000; pass(comp,rtS,null); } };
 })();
 if(MOBILE) post.on=false;
+let startLit=-1, lastLapT=0;
+function tone(f,d,v){ try{ if(!actx || muted) return; const o=actx.createOscillator(), g=actx.createGain(); o.type='square'; o.frequency.value=f; g.gain.setValueAtTime(v,actx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+d); o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime+d+0.02); }catch(e){} }
 let last=performance.now(), acc=0; let fpsAcc=0, fpsN=0, qLevel=0;
 function frame(now){
   requestAnimationFrame(frame);
   const raw=(now-last)/1000, dt=Math.min(0.1,raw); last=now;
   if(state==='count'){
-    countT-=Math.min(0.5,raw); const n=Math.ceil(countT-0.2); $('count').textContent=n>0?n:'GO !';
-    if(countT<=0.2 && state==='count'){ state='race'; setTimeout(()=>{ $('count').style.display='none'; }, 700); }
+    countT-=Math.min(0.5,raw); const L5=$('lights').children, lit=Math.min(5,Math.floor((3.2-countT)/0.52)); $('lights').style.display='flex'; $('count').textContent='';
+    for(let i=0;i<5;i++) L5[i].className=i<lit?'r':''; if(lit!==startLit){ startLit=lit; if(lit>0) tone(440,0.14,0.16); }
+    if(countT<=0.2 && state==='count'){ state='race'; startLit=-1; for(let i=0;i<5;i++) L5[i].className='g'; $('count').textContent=tr('GO !'); tone(880,0.5,0.2); setTimeout(()=>{ $('count').style.display='none'; $('lights').style.display='none'; }, 900); }
   }
   if(state==='done'){ doneT+=dt; if(doneT>1.2) $('end').style.display='flex'; }
   if(!idle()){ const n=Math.max(1,Math.ceil(dt*120)); for(let i=0;i<n;i++) step(dt/n); }
