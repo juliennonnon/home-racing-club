@@ -708,11 +708,11 @@ const tireM=(()=>{ // gomme : rainures autour du pneu, pavés et lamelles en bia
 function makeCar(color, mine, name, slot){
   const g=new THREE.Group(), body=new THREE.Group(), wheels=[], pivots=[], sparks=[]; g.add(body); let lab=null, tl=null;
   const geo=carGeo, MD=carModel.geo, paint=new THREE.MeshPhysicalMaterial({color, roughness:0.42, metalness:0.3, clearcoat:1, clearcoatRoughness:0.05, envMapIntensity:0.8, normalMap:flakeTex, normalScale:new THREE.Vector2(0.45,0.45), side:THREE.DoubleSide, vertexColors:!!MD});
-  if(MD){ add(new THREE.Mesh(MD, paint), body); body.add(new THREE.Mesh(carModel.glass, carModel.gm||(carModel.gm=new THREE.MeshStandardMaterial({color:0x020203, roughness:0.1, metalness:0, envMapIntensity:0.2, side:THREE.DoubleSide}))), new THREE.Mesh(carModel.lf, carModel.hm||(carModel.hm=new THREE.MeshBasicMaterial(Object.assign({color:0xfff2cf},pOff)))));
+  if(MD){ add(new THREE.Mesh(MD, paint), body); body.add(new THREE.Mesh(carModel.glass, carModel.gm||(carModel.gm=new THREE.MeshStandardMaterial({color:0x0b0c0f, roughness:0.2, metalness:0, envMapIntensity:0.22, side:THREE.DoubleSide}))), new THREE.Mesh(carModel.lf, carModel.hm||(carModel.hm=new THREE.MeshBasicMaterial(Object.assign({color:0xfff2cf},pOff)))));
     tl={m:new THREE.MeshBasicMaterial(Object.assign({color:0x8a1208},pOff)), g:[], on:null}; body.add(new THREE.Mesh(carModel.lr, tl.m));
     // halos lumineux : phares (blanc chaud) et feux arrière (rouge, plus forts au freinage)
     const halo=(x,y,z,col,sz,op)=>{ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex, color:col, transparent:true, opacity:op, blending:THREE.AdditiveBlending, depthWrite:false, fog:false})); sp.position.set(x,y,z); sp.scale.set(sz,sz,1); body.add(sp); return sp; };
-    [-1,1].forEach(sd=>{ halo(sd*1.4,1.47,3.5,0xffe6b0,1.7,0.6); tl.g.push(halo(sd*1.23,1.55,-3.86,0xff2a12,1.5,0.3)); }); box(2.2,0.7,6.6,0,0.75,0,chromeM,body,false); }   // carrosserie modélisée (assets/voiture.bin)
+    [-1,1].forEach(sd=>{ halo(sd*1.28,1.24,3.85,0xffe6b0,1.6,0.6); tl.g.push(halo(sd*1.42,1.56,-3.84,0xff2a12,1.4,0.3)); }); box(2.2,0.7,6.6,0,0.75,0,chromeM,body,false); }   // carrosserie modélisée (assets/voiture.bin)
   else {
   add(new THREE.Mesh(geo.low, paint), body); body.add(new THREE.Mesh(geo.glass, glassM), new THREE.Mesh(geo.lightF, lightFM), new THREE.Mesh(geo.grille, grilleM));
   rbox(2.3,0.5,0.34,0.1,0,1.5,-4.14,chromeM,body,false); rbox(2.0,0.26,0.3,0.08,0,1.5,-4.24,lightRM,body,false);                                   // barre de feux arrière
