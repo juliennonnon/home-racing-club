@@ -133,7 +133,7 @@
     <div class="row"><button class="go" id="hostBtn" data-i>Créer une partie</button></div>
     <div class="row"><input id="codeIn" class="in code" maxlength="4" placeholder="CODE" autocomplete="off"><button class="go alt" id="joinBtn" data-i>Rejoindre</button></div>
     <div class="row"><button class="go ghost" id="startBtn" data-i>Jouer en solo</button></div>
-    <div class="row opt"><span data-i>Robots</span> <select id="botN" class="in sel"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select> <span data-i>Niveau</span> <select id="botLvl" class="in sel"><option value="0" data-i>Facile</option><option value="1" selected data-i>Moyen</option><option value="2" data-i>Difficile</option></select></div>
+    <div class="row opt"><span data-i>Robots</span> <select id="botN" class="in sel"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select> <span data-i>Niveau</span> <select id="botLvl" class="in sel"><option value="0" data-i>Facile</option><option value="1" selected data-i>Moyen</option><option value="2" data-i>Difficile</option><option value="3" data-i>Expert</option></select></div>
     <div class="row opt" id="ctlRow"><span data-i>Commandes</span> <select id="ctlSel" class="in sel"><option value="btn" data-i>Boutons</option><option value="tilt" data-i>Incliner le téléphone</option></select></div>
     <p id="menuMsg" class="msg"></p>
     <p id="statLine"></p>
@@ -158,7 +158,7 @@
     <h1><span data-i style="color:inherit">Salon</span> <span id="lobbyCode"></span></h1>
     <p id="lobbyHint"></p>
     <div id="plist"></div>
-    <div class="row opt" id="lobbyBots"><span data-i>Robots</span> <select id="lbotN" class="in sel"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select> <span data-i>Niveau</span> <select id="lbotLvl" class="in sel"><option value="0" data-i>Facile</option><option value="1" selected data-i>Moyen</option><option value="2" data-i>Difficile</option></select></div>
+    <div class="row opt" id="lobbyBots"><span data-i>Robots</span> <select id="lbotN" class="in sel"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select> <span data-i>Niveau</span> <select id="lbotLvl" class="in sel"><option value="0" data-i>Facile</option><option value="1" selected data-i>Moyen</option><option value="2" data-i>Difficile</option><option value="3" data-i>Expert</option></select></div>
     <button class="go" id="launchBtn" data-i>Lancer la course</button>
     <p id="lobbyWait" data-i>En attente du lancement par l'hôte…</p>
     <div class="row"><button class="go ghost" id="leaveBtn" data-i>Quitter</button></div>
@@ -185,15 +185,11 @@
 // ---------- Données du niveau (unités : centimètres) ----------
 // circuit choisi : ?circuit=chambre dans l'adresse, sinon le dernier choisi au menu
 const CIRCUIT = (()=>{ const m=location.search.match(/[?&]circuit=(\w+)/); let c=m?m[1]:null; try{ if(!c) c=localStorage.getItem('hrc_circuit'); }catch(e){} return c==='chambre'?'chambre':'salon'; })(), CH = CIRCUIT==='chambre';
-const ROOM = CH ? {hx:520, hz:350, h:250} : {hx:500, hz:350, h:250};
+const ROOM = CH ? {hx:560, hz:410, h:250} : {hx:500, hz:350, h:250};
 const TRACK_HALF = 27.5, BAR_IN = 30.1, BAR_W = 1.2, BAR_H = 2.6, CAR_R = 3.2, LAPS = 5, SECTORS = 16;
-// chambre : [x, z, hauteur] — passage sous le lit, rampe de livres, pont en blocs au-dessus de la piste
-const TRACK_CH = [
- [-60,-95,0],[10,-80,0],[80,-110,0],[160,-120,0],[215,-160,0],[245,-225,0],[310,-262,0],[372,-205,0],[382,-110,0],[382,-10,0],[380,85,0],[345,170,0],[270,215,0],
- [190,190,0],[130,120,0],[60,90,0],[0,130,0],[-20,200,4],
- [-80,250,12],[-155,215,24],[-200,140,32],[-210,50,34],[-210,-45,34],[-228,-135,30],[-285,-218,20],[-365,-228,10],[-405,-145,3],[-405,-45,0],
- [-380,55,0],[-315,120,0],[-252,88,0],[-205,30,0],[-150,-45,0]].map(p=>[p[0]*1.15,p[1]*1.15,p[2]]);
-const BED = {x:440, z:-25, w:110, d:210, h:30};   // lit : on roule dessous, entre les pieds
+// chambre : [x, z, hauteur] — sous le lit, rampe de livres, pont en blocs, montée le long du mur jusque sur le lit (2e étage), grande descente
+const TRACK_CH = [[-69,-109,0],[11,-92,0],[92,-126,0],[184,-138,0],[247,-184,0],[282,-250,0],[356,-280,0],[428,-226,0],[445,-126,0],[445,-12,0],[442,98,0],[397,196,0],[310,240,0],[218,212,0],[150,138,0],[69,103,0],[0,140,0],[-40,190,4],[-110,205,13],[-180,178,24],[-230,115,32],[-241,40,35],[-241,-52,35],[-268,-150,36],[-340,-212,38],[-440,-222,40],[-505,-285,42],[-470,-360,44],[-340,-368,47],[-100,-368,54],[100,-366,60],[300,-360,66],[425,-325,68],[460,-250,68],[450,-150,68],[448,-20,68],[448,100,68],[440,215,66],[380,310,62],[250,360,54],[80,366,44],[-100,364,32],[-280,358,20],[-420,330,8],[-505,240,1],[-505,120,0],[-470,30,0],[-390,0,0],[-305,25,0],[-225,12,0],[-160,-58,0]];
+const BED = {x:450, z:-35, w:110, d:210, h:30};   // lit : on roule dessous, entre les pieds
 const TRACK_PTS = CH ? TRACK_CH : [
   [-250,250],[-60,252],[150,250],[330,255],[430,215],[458,140],[425,75],[300,60],[215,60],[150,60],
   [96,37],[73,-17],[96,-72],[150,-95],[215,-95],[340,-95],[425,-110],[458,-180],[440,-255],[380,-298],[280,-302],
@@ -265,7 +261,7 @@ const AD={};
 // ---------- Rendu ----------
 const canvas = document.getElementById('c');
 // ---------- Langue : français ou anglais (les textes français servent de clés) ----------
-const EN={"Tour": "Lap", "Meilleur tour :": "Best lap:", "<b>R</b> replacer la voiture · <b>M</b> couper le son": "<b>R</b> reset the car · <b>M</b> mute", "GAZ": "GAS", "FREIN": "BRAKE", "Tourne ton téléphone à l'horizontale<br>pour piloter 🔄": "Turn your phone sideways<br>to drive 🔄", "Course de mini-voitures dans la maison · jusqu'à 8 joueurs": "Mini car racing around the house · up to 8 players", "Ton pseudo": "Your nickname", "Créer une partie": "Create a game", "Rejoindre": "Join", "Jouer en solo": "Play solo", "Robots": "Bots", "Niveau": "Level", "Facile": "Easy", "Moyen": "Medium", "Difficile": "Hard", "Boutons": "Buttons", "Incliner le téléphone": "Tilt the phone", "Commandes": "Controls", "tourner (ou incliner le téléphone, selon le réglage)": "steer (or tilt the phone, depending on the setting)", "maintenir pour accélérer, relâcher pour ralentir": "hold to accelerate, release to slow down", "freiner fort, puis marche arrière": "brake hard, then reverse", "glisser le pouce du GAZ vers le haut : on dérape en gardant les gaz, relâcher pour un petit turbo": "slide your thumb up from GAS: you drift while keeping the throttle, release for a small boost", "replacer la voiture sur la piste": "put the car back on the track", "ou W A S D : accélérer, freiner, tourner": "or W A S D: accelerate, brake, steer", "Espace": "Space", "dérapage (maintenir en tournant, relâcher pour un petit turbo)": "drift (hold while turning, release for a small boost)", "Salon": "Lobby", "Lancer la course": "Start the race", "En attente du lancement par l'hôte…": "Waiting for the host to start…", "Quitter": "Leave", "Arrivée <span>!</span>": "Finish<span>!</span>", "Ton temps :": "Your time:", "Rejouer": "Play again", "Menu principal": "Main menu", "Nouveau record du tour : ": "New lap record: ", "Ton record du tour : ": "Your lap record: ", " (toi)": " (you)", "en course…": "racing…", "Retour au salon": "Back to lobby", " · L'hôte relance la partie depuis le salon.": " · The host restarts the game from the lobby.", "Donne ce code aux autres joueurs": "Give this code to the other players", "Tu es dans la partie": "You are in the game", " · robot": " · bot", " · hôte": " · host", "Le mode réseau est indisponible sur cette page.": "Network play is unavailable on this page.", "Création de la partie…": "Creating the game…", "Impossible de créer la partie (": "Could not create the game (", "). Vérifie ta connexion ou coupe ton VPN.": "). Check your connection or turn off your VPN.", "erreur": "error", "Entre le code à 4 lettres de la partie.": "Enter the game's 4-letter code.", "Connexion à la partie ": "Connecting to game ", "Pas de réponse. Vérifie le code, et coupe ton VPN si tu en as un.": "No answer. Check the code, and turn off your VPN if you use one.", "L'hôte a quitté la partie.": "The host left the game.", "Connexion impossible.": "Could not connect.", "Aucune partie avec ce code.": "No game with this code.", "Erreur de connexion (": "Connection error (", "La partie est complète (8 joueurs).": "The game is full (8 players).", "La course est déjà lancée, réessaie dans un instant.": "The race has already started, try again in a moment.", "Demi-tour !": "Wrong way!", "Turbo !": "Boost!", "GO !": "GO!", "Dernier tour !": "Final lap!", "Pilote": "Driver", " courses jouées": " races played", "Voir le replay": "Watch replay", "Caméra": "Camera", "Fermer": "Close", "Circuit": "Track", "Le salon": "Living room", "La chambre": "Bedroom", "Chargement du circuit de l'hôte…": "Loading the host's track…"};
+const EN={"Tour": "Lap", "Meilleur tour :": "Best lap:", "<b>R</b> replacer la voiture · <b>M</b> couper le son": "<b>R</b> reset the car · <b>M</b> mute", "GAZ": "GAS", "FREIN": "BRAKE", "Tourne ton téléphone à l'horizontale<br>pour piloter 🔄": "Turn your phone sideways<br>to drive 🔄", "Course de mini-voitures dans la maison · jusqu'à 8 joueurs": "Mini car racing around the house · up to 8 players", "Ton pseudo": "Your nickname", "Créer une partie": "Create a game", "Rejoindre": "Join", "Jouer en solo": "Play solo", "Robots": "Bots", "Niveau": "Level", "Facile": "Easy", "Moyen": "Medium", "Difficile": "Hard", "Expert": "Expert", "Boutons": "Buttons", "Incliner le téléphone": "Tilt the phone", "Commandes": "Controls", "tourner (ou incliner le téléphone, selon le réglage)": "steer (or tilt the phone, depending on the setting)", "maintenir pour accélérer, relâcher pour ralentir": "hold to accelerate, release to slow down", "freiner fort, puis marche arrière": "brake hard, then reverse", "glisser le pouce du GAZ vers le haut : on dérape en gardant les gaz, relâcher pour un petit turbo": "slide your thumb up from GAS: you drift while keeping the throttle, release for a small boost", "replacer la voiture sur la piste": "put the car back on the track", "ou W A S D : accélérer, freiner, tourner": "or W A S D: accelerate, brake, steer", "Espace": "Space", "dérapage (maintenir en tournant, relâcher pour un petit turbo)": "drift (hold while turning, release for a small boost)", "Salon": "Lobby", "Lancer la course": "Start the race", "En attente du lancement par l'hôte…": "Waiting for the host to start…", "Quitter": "Leave", "Arrivée <span>!</span>": "Finish<span>!</span>", "Ton temps :": "Your time:", "Rejouer": "Play again", "Menu principal": "Main menu", "Nouveau record du tour : ": "New lap record: ", "Ton record du tour : ": "Your lap record: ", " (toi)": " (you)", "en course…": "racing…", "Retour au salon": "Back to lobby", " · L'hôte relance la partie depuis le salon.": " · The host restarts the game from the lobby.", "Donne ce code aux autres joueurs": "Give this code to the other players", "Tu es dans la partie": "You are in the game", " · robot": " · bot", " · hôte": " · host", "Le mode réseau est indisponible sur cette page.": "Network play is unavailable on this page.", "Création de la partie…": "Creating the game…", "Impossible de créer la partie (": "Could not create the game (", "). Vérifie ta connexion ou coupe ton VPN.": "). Check your connection or turn off your VPN.", "erreur": "error", "Entre le code à 4 lettres de la partie.": "Enter the game's 4-letter code.", "Connexion à la partie ": "Connecting to game ", "Pas de réponse. Vérifie le code, et coupe ton VPN si tu en as un.": "No answer. Check the code, and turn off your VPN if you use one.", "L'hôte a quitté la partie.": "The host left the game.", "Connexion impossible.": "Could not connect.", "Aucune partie avec ce code.": "No game with this code.", "Erreur de connexion (": "Connection error (", "La partie est complète (8 joueurs).": "The game is full (8 players).", "La course est déjà lancée, réessaie dans un instant.": "The race has already started, try again in a moment.", "Demi-tour !": "Wrong way!", "Turbo !": "Boost!", "GO !": "GO!", "Dernier tour !": "Final lap!", "Pilote": "Driver", " courses jouées": " races played", "Voir le replay": "Watch replay", "Caméra": "Camera", "Fermer": "Close", "Circuit": "Track", "Le salon": "Living room", "La chambre": "Bedroom", "Chargement du circuit de l'hôte…": "Loading the host's track…"};
 let LANG='fr'; try{ LANG=localStorage.getItem('hrc_lang')||((navigator.language||'fr').toLowerCase().startsWith('fr')?'fr':'en'); }catch(e){}
 const tr=t=>(LANG==='en' && EN[t]!==undefined)?EN[t]:t;
 function applyLang(l){ if(l){ LANG=l; try{ localStorage.setItem('hrc_lang',l); }catch(e){} } document.documentElement.lang=LANG;
@@ -616,7 +612,6 @@ if(CH) (function buildChambre(){
   // --- lit : cadre peint, lattes, matelas, couette étoilée ; dessous ouvert entre les pieds ---
   [[x0+3,z0+3],[x1-3,z0+3],[x0+3,z1-3],[x1-3,z1-3]].forEach(([x,z],k)=>box(6,k<2?100:48,6,x,(k<2?100:48)/2,z,paint));
   box(4,12,B.d,x0+2,B.h+6,B.z,paint); box(4,12,B.d,x1-2,B.h+6,B.z,paint); box(B.w,12,4,B.x,B.h+6,z1-2,paint);
-  box(B.w-6,48,3,B.x,B.h+46,z0+2,paint);                       // tête de lit, au-dessus du passage
   for(let z=z0+8;z<z1-4;z+=13) box(B.w-8,1.6,7,B.x,B.h+0.8,z,wood(0xd8b88a,40,0.6),scene,false);
   rbox(B.w-6,18,B.d-8,4,B.x,B.h+21,B.z,white);
   const duvetT=canvasTex(512,512,(g,w,h)=>{ g.fillStyle='#22407a'; g.fillRect(0,0,w,h);
@@ -626,19 +621,11 @@ if(CH) (function buildChambre(){
   rbox(B.w+4,7,B.d*0.72,3,B.x,B.h+32,B.z+B.d*0.13,duv);
   const drape=new THREE.Mesh(new THREE.PlaneGeometry(B.d*0.72,22,30,4), duv); { const p=drape.geometry.attributes.position; for(let i=0;i<p.count;i++) p.setZ(i,Math.sin(p.getX(i)*0.25)*1.2*(0.5-p.getY(i)/22)); drape.geometry.computeVertexNormals(); }
   drape.position.set(x0-2.5,B.h+20,B.z+B.d*0.13); drape.rotation.y=-Math.PI/2; add(drape);
-  rbox(46,10,30,5,B.x,B.h+35,z0+24,white); rbox(40,8,26,4,B.x+4,B.h+42,z0+30,mat(0xffd84a,0.9));
   ao(B.x,B.z,B.w,B.d,0.55);
-  // --- bureau sous la fenêtre, chaise, lampe, cahiers ---
-  const D={x:55,z:-318,w:160,d:56,h:72}; box(D.w,3,D.d,D.x,D.h-1.5,D.z,wood(0xe0c49a,60,0.5));
-  legPos(D,4).forEach(p=>box(4,D.h-3,4,p.x,(D.h-3)/2,p.z,paint)); box(D.w-10,14,3,D.x,D.h-10,D.z-D.d/2+3,paint);
-  { const c={x:40,z:-268,w:42,d:40}; const cg=new THREE.Group(); cg.position.set(c.x,0,c.z); cg.rotation.y=0.35; scene.add(cg);
-    box(40,4,40,0,44,0,mat(0x2f6fd6,0.6),cg); [[-17,-17],[17,-17],[-17,17],[17,17]].forEach(([x,z])=>box(3,44,3,x,22,z,paint,cg)); box(40,38,3,0,65,18,mat(0x2f6fd6,0.6),cg); }
-  cyl(7,8,2,D.x+55,D.h+1,D.z-8,mat(0xf0f0f0,0.4),scene,16); { const a=cyl(0.8,0.8,34,D.x+55,D.h+17,D.z-8,mat(0x9aa0aa,0.3,{metalness:0.6}),scene,8); a.rotation.z=0.25; }
-  [[0,0x3a7bd5],[1,0xe8484a],[2,0x2fa35e]].forEach(([k,c])=>{ const b=box(24,1.6,32,D.x-40+k*3,D.h+0.8+k*1.6,D.z+2,mat(c,0.8)); b.rotation.y=k*0.2-0.2; });
   // --- étagère contre le mur, peluches, livres ---
-  const S={x:230,z:337,w:150,d:26,h:120}; box(S.w,S.h,2,S.x,S.h/2,S.z+S.d/2-1,paint);
-  [0,40,80,120].forEach(y=>box(S.w,2.5,S.d,S.x,y+1.25,S.z,paint)); [-1,1].forEach(sd=>box(2.5,S.h,S.d,S.x+sd*S.w/2,S.h/2,S.z,paint));
-  for(let sh=0;sh<3;sh++){ let x=S.x-S.w/2+4; while(x<S.x+S.w/2-10){ const w=2.5+rnd()*3, hh=22+rnd()*12; if(rnd()<0.15){ x+=12; continue; } box(w,hh,18,x+w/2,sh*40+2.5+hh/2,S.z,mat(new THREE.Color().setHSL(rnd(),0.55,0.45).getHex(),0.8)); x+=w+0.3; } }
+  { const sg=new THREE.Group(); sg.position.set(ROOM.hx-14,0,320); sg.rotation.y=-Math.PI/2; scene.add(sg); const S={w:150,d:26,h:120};
+    box(S.w,S.h,2,0,S.h/2,S.d/2-1,paint,sg); [0,40,80,120].forEach(y=>box(S.w,2.5,S.d,0,y+1.25,0,paint,sg)); [-1,1].forEach(sd=>box(2.5,S.h,S.d,sd*S.w/2,S.h/2,0,paint,sg));
+    for(let sh=0;sh<3;sh++){ let x=-S.w/2+4; while(x<S.w/2-10){ const w=2.5+rnd()*3, hh=22+rnd()*12; if(rnd()<0.15){ x+=12; continue; } box(w,hh,18,x+w/2,sh*40+2.5+hh/2,0,mat(new THREE.Color().setHSL(rnd(),0.55,0.45).getHex(),0.8),sg); x+=w+0.3; } } }
   // --- coffre à jouets ouvert ---
   const C={x:200,z:-10,w:84,d:46,h:44}; box(C.w,C.h,C.d,C.x,C.h/2,C.z,mat(0x3a8fd6,0.6)); box(C.w-4,2,C.d-4,C.x,C.h-6,C.z,mat(0x1d2b55,0.9));
   { const lid=box(C.w,3,C.d,C.x,C.h+C.d/2-2,C.z-C.d/2-1,mat(0x3a8fd6,0.6)); lid.rotation.x=-1.35; }
@@ -650,11 +637,11 @@ if(CH) (function buildChambre(){
   // --- jouets éparpillés : fusée, ballon, legos, dinosaure, chaussettes ---
   const lego=(w,d,c,x,z,ry,y=0)=>{ const g=new THREE.Group(), m=mat(c,0.35); g.position.set(x,y,z); g.rotation.y=ry; scene.add(g); box(w*8,9.6,d*8,0,4.8,0,m,g);
     for(let i=0;i<w;i++) for(let j=0;j<d;j++) cyl(2.4,2.4,1.8,(i-(w-1)/2)*8,10.5,(j-(d-1)/2)*8,m,g,12); return g; };
-  [[4,2,0xe8484a,100,-200,0.4],[2,2,0xffd23a,130,-215,1.1],[4,2,0x2f6fd6,-20,-205,-0.3],[2,1,0x2fa35e,-50,-190,0.9],[4,2,0xffd23a,280,60,0.2],[2,2,0xe8484a,300,40,1.4],[4,2,0x2fa35e,-120,330,0.7],[2,2,0x2f6fd6,-300,250,0.3],[4,2,0xe8484a,-470,-300,1.1]].forEach(a=>lego(...a));
+  [[4,2,0xe8484a,100,-200,0.4],[2,2,0xffd23a,130,-215,1.1],[4,2,0x2f6fd6,-20,-205,-0.3],[2,1,0x2fa35e,-50,-190,0.9],[4,2,0xffd23a,280,60,0.2],[2,2,0xe8484a,300,40,1.4],[4,2,0x2fa35e,-120,330,0.7],[2,2,0x2f6fd6,-300,250,0.3]].forEach(a=>lego(...a));
   lego(4,2,0x2f6fd6,100,-200,0.6,9.6);
   { const g=new THREE.Group(); g.position.set(275,0,-60); scene.add(g); cyl(6,6,40,0,22,0,white,g,18); const n=new THREE.Mesh(new THREE.ConeGeometry(6,14,18), mat(0xe8484a,0.5)); n.position.y=49; add(n,g);
     [0,1,2].forEach(k=>{ const f=box(1.2,12,9,Math.sin(k*2.094)*6,8,Math.cos(k*2.094)*6,mat(0xe8484a,0.5),g); f.rotation.y=k*2.094; }); cyl(3,3,1.2,0,32,6.2,mat(0x7fc1e8,0.2),g,14).rotation.x=Math.PI/2; }
-  { const b=new THREE.Mesh(new THREE.SphereGeometry(11,24,16), new THREE.MeshStandardMaterial({map:canvasTex(256,128,(g,w,h)=>{ ['#e8484a','#ffd23a','#2f6fd6','#2fa35e'].forEach((c,i)=>{ g.fillStyle=c; g.fillRect(i*w/4,0,w/4,h); }); }), roughness:0.5})); b.position.set(-90,11,160); add(b); }
+  { const b=new THREE.Mesh(new THREE.SphereGeometry(11,24,16), new THREE.MeshStandardMaterial({map:canvasTex(256,128,(g,w,h)=>{ ['#e8484a','#ffd23a','#2f6fd6','#2fa35e'].forEach((c,i)=>{ g.fillStyle=c; g.fillRect(i*w/4,0,w/4,h); }); }), roughness:0.5})); b.position.set(120,11,-40); add(b); }
   // dinosaure en peluche (brachiosaure) : formes rondes
   { const g=new THREE.Group(); g.position.set(-330,0,-60); g.rotation.y=0.8; scene.add(g); const dm=mat(0x5fae5a,1), bm=mat(0xa8d68a,1);
     const ell=(rx,ry,rz,x,y,z,m)=>{ const o=new THREE.Mesh(new THREE.SphereGeometry(1,18,12), m); o.scale.set(rx,ry,rz); o.position.set(x,y,z); return add(o,g); };
@@ -675,7 +662,7 @@ if(CH) (function buildChambre(){
     const a=P(i,-W,-1.8), b=P(i,W,-1.8), c=P(i+1,-W,-1.8), d=P(i+1,W,-1.8); dp.push(...a,...c,...b, ...b,...c,...d);
     [-1,1].forEach(s=>{ const e=P(i,s*W,-1.8), f=P(i,s*W,0.45), g=P(i+1,s*W,-1.8), h=P(i+1,s*W,0.45); if(s<0) dp.push(...e,...g,...f, ...f,...g,...h); else dp.push(...e,...f,...g, ...f,...h,...g); }); }
   { const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(dp,3)); g.computeVertexNormals(); const m=new THREE.Mesh(g, wood(0xd9b07a,40,0.6)); m.material.side=THREE.DoubleSide; add(m); }
-  const free=(x,z)=>!ground.some(p=>Math.hypot(p.x-x,p.z-z)<W+4);
+  const free=(x,z)=>!ground.some(p=>Math.hypot(p.x-x,p.z-z)<W+4) && !(Math.abs(x-B.x)<B.w/2+2 && Math.abs(z-B.z)<B.d/2+2);
   for(let i=0;i<N;i+=8){ const p=T.pts[i]; if(p.y<6) continue;
     [-1,1].forEach(s=>{ const off=s*(W-9), x=p.x+p.tz*off, z=p.z-p.tx*off; if(!free(x,z)) return; const top=p.y-1.8, ry=Math.atan2(p.tx,p.tz);
       if(p.y>=30){ let y=0, k=0; while(y<top-0.5){ const hh=Math.min(9.6,top-y); const bl=box(16,hh,16,x,y+hh/2,z,mat([0xe8484a,0xffd23a,0x2f6fd6,0x2fa35e][(i/8+k+(s>0?1:0))%4|0],0.35)); bl.rotation.y=ry; y+=hh; k++; } }
@@ -982,13 +969,13 @@ function renderEnd(){
 
 // ---------- Robots : pilotés par l'hôte, envoyés aux autres comme des joueurs ----------
 const BOT_NAMES=['Turbo','Zigzag','Boulon','Pixel','Rocket','Biscotte','Flash'];
-const BOT_LV=[{vmax:155,a:245},{vmax:170,a:300},{vmax:182,a:300}], BOT_BRK=260, bots=[];
+const BOT_LV=[{vmax:155,a:245},{vmax:170,a:300},{vmax:182,a:300},{vmax:194,a:345}], BOT_BRK=260, bots=[];
 const BOT_PROF=(()=>{ const N=T.N, ds=T.length/N, rad=new Float32Array(N);
   for(let i=0;i<N;i++){ const a=T.pts[(i-4+N)%N], b=T.pts[(i+4)%N]; let d=Math.atan2(b.tx,b.tz)-Math.atan2(a.tx,a.tz); d=Math.abs(Math.atan2(Math.sin(d),Math.cos(d))); rad[i]=Math.min(2000,8*ds/Math.max(d,1e-4)); }
   return BOT_LV.map(l=>{ const v=new Float32Array(N); for(let i=0;i<N;i++) v[i]=Math.min(l.vmax,Math.sqrt(l.a*rad[i]));
     for(let i=2*N-1;i>=0;i--){ const j=i%N, n=(i+1)%N; v[j]=Math.min(v[j],Math.sqrt(v[n]*v[n]+2*BOT_BRK*ds)); } return v; }); })();
 function setBots(n,lvl){
-  net.botLvl=Math.max(0,Math.min(2,lvl|0)); net.botN=Math.max(0,Math.min(7,n|0)); net.players=net.players.filter(p=>!p.bot);
+  net.botLvl=Math.max(0,Math.min(3,lvl|0)); net.botN=Math.max(0,Math.min(7,n|0)); net.players=net.players.filter(p=>!p.bot);
   const k=Math.min(net.botN,MAXP-net.players.length);
   for(let i=0;i<k;i++){ let slot=0; while(net.players.some(p=>p.slot===slot)) slot++; net.players.push({id:'B'+i,name:BOT_NAMES[i],slot,bot:true}); }
 }
@@ -1019,7 +1006,7 @@ function stepBots(dt){
         if(!(b.bump>0) && botT>2){ b.bump=1.6; b.v*=gap>0?0.88:0.96; b.slip=Math.max(b.slip,0.2+Math.min(0.4,Math.abs(b.v-o.v)/110)); b.kick=side*(2+Math.random()*3); } } }   // accrochage : perte de vitesse et écart
     if(b.bump>0) b.bump-=dt; if(b.kick){ b.lat+=b.kick*Math.min(1,5*dt); b.kick*=Math.exp(-5*dt); if(Math.abs(b.kick)<0.05) b.kick=0; }
     b.dg=(b.dg||0)+(Math.max(-1.5,Math.min(1.5,dodge))*8-(b.dg||0))*Math.min(1,4*dt);
-    if(b.slip>0){ b.slip-=dt; tv*=0.6; } else if(on && botT>4 && Math.random()<dt*0.03){ b.slip=0.35+Math.random()*0.6; b.kick=(Math.random()<0.5?-1:1)*(2+Math.random()*4); }   // petite faute : trop large, on lève le pied
+    if(b.slip>0){ b.slip-=dt; tv*=0.6; } else if(on && botT>4 && Math.random()<dt*(net.botLvl>2?0.012:0.03)){ b.slip=0.35+Math.random()*0.6; b.kick=(Math.random()<0.5?-1:1)*(2+Math.random()*4); }   // petite faute : trop large, on lève le pied
     b.v+=Math.max(-BOT_BRK*dt, Math.min(150*dt, tv-b.v));
     const s0=b.s; b.s+=b.v*dt/ds;
     b.lat+=(Math.max(-24,Math.min(24,b.lane+4*Math.sin(b.ph+b.s*0.02)+b.dg))-b.lat)*Math.min(1,(0.7+2.5*Math.min(1,Math.abs(b.dg)/4))*dt);
