@@ -110,7 +110,7 @@
   <div id="lights"><i></i><i></i><i></i><i></i><i></i></div>
   <div id="speed" class="pill"><b id="kmh">0</b>km/h</div>
   <div id="rank" class="pill"></div>
-  <div id="help" class="pill" data-i><b>R</b> replacer la voiture · <b>M</b> couper le son</div>
+  <div id="help" class="pill" data-i><b>R</b> replacer la voiture · <b>C</b> caméra · <b>M</b> couper le son</div>
 </div>
 
 <div id="touch">
@@ -118,7 +118,7 @@
   <div class="tb" id="bDrift" data-k="drift">DRIFT</div>
   <div class="tb" id="bGas" data-k="gas" data-i>GAZ</div>
   <div class="tb" id="bBrake" data-k="down" data-i>FREIN</div>
-  <div id="tsBar"><div class="ts" id="bResp">↺</div><div class="ts" id="bMute">♪</div></div>
+  <div id="tsBar"><div class="ts" id="bResp">↺</div><div class="ts" id="bCam">🎥</div><div class="ts" id="bMute">♪</div></div>
 </div>
 <div id="rpBar"><b>● REPLAY</b><button id="rpCam" data-i>Caméra</button><button id="rpClose" data-i>Fermer</button></div>
 <div id="rot" data-i>Tourne ton téléphone à l'horizontale<br>pour piloter 🔄</div>
@@ -261,7 +261,7 @@ const AD={};
 // ---------- Rendu ----------
 const canvas = document.getElementById('c');
 // ---------- Langue : français ou anglais (les textes français servent de clés) ----------
-const EN={"Tour": "Lap", "Meilleur tour :": "Best lap:", "<b>R</b> replacer la voiture · <b>M</b> couper le son": "<b>R</b> reset the car · <b>M</b> mute", "GAZ": "GAS", "FREIN": "BRAKE", "Tourne ton téléphone à l'horizontale<br>pour piloter 🔄": "Turn your phone sideways<br>to drive 🔄", "Course de mini-voitures dans la maison · jusqu'à 8 joueurs": "Mini car racing around the house · up to 8 players", "Ton pseudo": "Your nickname", "Créer une partie": "Create a game", "Rejoindre": "Join", "Jouer en solo": "Play solo", "Robots": "Bots", "Niveau": "Level", "Facile": "Easy", "Moyen": "Medium", "Difficile": "Hard", "Expert": "Expert", "Boutons": "Buttons", "Incliner le téléphone": "Tilt the phone", "Commandes": "Controls", "tourner (ou incliner le téléphone, selon le réglage)": "steer (or tilt the phone, depending on the setting)", "maintenir pour accélérer, relâcher pour ralentir": "hold to accelerate, release to slow down", "freiner fort, puis marche arrière": "brake hard, then reverse", "glisser le pouce du GAZ vers le haut : on dérape en gardant les gaz, relâcher pour un petit turbo": "slide your thumb up from GAS: you drift while keeping the throttle, release for a small boost", "replacer la voiture sur la piste": "put the car back on the track", "ou W A S D : accélérer, freiner, tourner": "or W A S D: accelerate, brake, steer", "Espace": "Space", "dérapage (maintenir en tournant, relâcher pour un petit turbo)": "drift (hold while turning, release for a small boost)", "Salon": "Lobby", "Lancer la course": "Start the race", "En attente du lancement par l'hôte…": "Waiting for the host to start…", "Quitter": "Leave", "Arrivée <span>!</span>": "Finish<span>!</span>", "Ton temps :": "Your time:", "Rejouer": "Play again", "Menu principal": "Main menu", "Nouveau record du tour : ": "New lap record: ", "Ton record du tour : ": "Your lap record: ", " (toi)": " (you)", "en course…": "racing…", "Retour au salon": "Back to lobby", " · L'hôte relance la partie depuis le salon.": " · The host restarts the game from the lobby.", "Donne ce code aux autres joueurs": "Give this code to the other players", "Tu es dans la partie": "You are in the game", " · robot": " · bot", " · hôte": " · host", "Le mode réseau est indisponible sur cette page.": "Network play is unavailable on this page.", "Création de la partie…": "Creating the game…", "Impossible de créer la partie (": "Could not create the game (", "). Vérifie ta connexion ou coupe ton VPN.": "). Check your connection or turn off your VPN.", "erreur": "error", "Entre le code à 4 lettres de la partie.": "Enter the game's 4-letter code.", "Connexion à la partie ": "Connecting to game ", "Pas de réponse. Vérifie le code, et coupe ton VPN si tu en as un.": "No answer. Check the code, and turn off your VPN if you use one.", "L'hôte a quitté la partie.": "The host left the game.", "Connexion impossible.": "Could not connect.", "Aucune partie avec ce code.": "No game with this code.", "Erreur de connexion (": "Connection error (", "La partie est complète (8 joueurs).": "The game is full (8 players).", "La course est déjà lancée, réessaie dans un instant.": "The race has already started, try again in a moment.", "Demi-tour !": "Wrong way!", "Turbo !": "Boost!", "GO !": "GO!", "Dernier tour !": "Final lap!", "Pilote": "Driver", " courses jouées": " races played", "Voir le replay": "Watch replay", "Caméra": "Camera", "Fermer": "Close", "Circuit": "Track", "Le salon": "Living room", "La chambre": "Bedroom", "Chargement du circuit de l'hôte…": "Loading the host's track…"};
+const EN={"Tour": "Lap", "Meilleur tour :": "Best lap:", "<b>R</b> replacer la voiture · <b>C</b> caméra · <b>M</b> couper le son": "<b>R</b> reset the car · <b>C</b> camera · <b>M</b> mute", "Vue poursuite": "Chase view", "Vue capot": "Hood view", "Vue pare-chocs": "Bumper view", "GAZ": "GAS", "FREIN": "BRAKE", "Tourne ton téléphone à l'horizontale<br>pour piloter 🔄": "Turn your phone sideways<br>to drive 🔄", "Course de mini-voitures dans la maison · jusqu'à 8 joueurs": "Mini car racing around the house · up to 8 players", "Ton pseudo": "Your nickname", "Créer une partie": "Create a game", "Rejoindre": "Join", "Jouer en solo": "Play solo", "Robots": "Bots", "Niveau": "Level", "Facile": "Easy", "Moyen": "Medium", "Difficile": "Hard", "Expert": "Expert", "Boutons": "Buttons", "Incliner le téléphone": "Tilt the phone", "Commandes": "Controls", "tourner (ou incliner le téléphone, selon le réglage)": "steer (or tilt the phone, depending on the setting)", "maintenir pour accélérer, relâcher pour ralentir": "hold to accelerate, release to slow down", "freiner fort, puis marche arrière": "brake hard, then reverse", "glisser le pouce du GAZ vers le haut : on dérape en gardant les gaz, relâcher pour un petit turbo": "slide your thumb up from GAS: you drift while keeping the throttle, release for a small boost", "replacer la voiture sur la piste": "put the car back on the track", "ou W A S D : accélérer, freiner, tourner": "or W A S D: accelerate, brake, steer", "Espace": "Space", "dérapage (maintenir en tournant, relâcher pour un petit turbo)": "drift (hold while turning, release for a small boost)", "Salon": "Lobby", "Lancer la course": "Start the race", "En attente du lancement par l'hôte…": "Waiting for the host to start…", "Quitter": "Leave", "Arrivée <span>!</span>": "Finish<span>!</span>", "Ton temps :": "Your time:", "Rejouer": "Play again", "Menu principal": "Main menu", "Nouveau record du tour : ": "New lap record: ", "Ton record du tour : ": "Your lap record: ", " (toi)": " (you)", "en course…": "racing…", "Retour au salon": "Back to lobby", " · L'hôte relance la partie depuis le salon.": " · The host restarts the game from the lobby.", "Donne ce code aux autres joueurs": "Give this code to the other players", "Tu es dans la partie": "You are in the game", " · robot": " · bot", " · hôte": " · host", "Le mode réseau est indisponible sur cette page.": "Network play is unavailable on this page.", "Création de la partie…": "Creating the game…", "Impossible de créer la partie (": "Could not create the game (", "). Vérifie ta connexion ou coupe ton VPN.": "). Check your connection or turn off your VPN.", "erreur": "error", "Entre le code à 4 lettres de la partie.": "Enter the game's 4-letter code.", "Connexion à la partie ": "Connecting to game ", "Pas de réponse. Vérifie le code, et coupe ton VPN si tu en as un.": "No answer. Check the code, and turn off your VPN if you use one.", "L'hôte a quitté la partie.": "The host left the game.", "Connexion impossible.": "Could not connect.", "Aucune partie avec ce code.": "No game with this code.", "Erreur de connexion (": "Connection error (", "La partie est complète (8 joueurs).": "The game is full (8 players).", "La course est déjà lancée, réessaie dans un instant.": "The race has already started, try again in a moment.", "Demi-tour !": "Wrong way!", "Turbo !": "Boost!", "GO !": "GO!", "Dernier tour !": "Final lap!", "Pilote": "Driver", " courses jouées": " races played", "Voir le replay": "Watch replay", "Caméra": "Camera", "Fermer": "Close", "Circuit": "Track", "Le salon": "Living room", "La chambre": "Bedroom", "Chargement du circuit de l'hôte…": "Loading the host's track…"};
 let LANG='fr'; try{ LANG=localStorage.getItem('hrc_lang')||((navigator.language||'fr').toLowerCase().startsWith('fr')?'fr':'en'); }catch(e){}
 const tr=t=>(LANG==='en' && EN[t]!==undefined)?EN[t]:t;
 function applyLang(l){ if(l){ LANG=l; try{ localStorage.setItem('hrc_lang',l); }catch(e){} } document.documentElement.lang=LANG;
@@ -858,6 +858,7 @@ addEventListener('keydown',e=>{
   if(e.repeat) return; keys[e.code]=true;
   if(e.code==='KeyR' && state==='race') respawn();
   if(e.code==='KeyM') muted=!muted;
+  if(e.code==='KeyC') nextCam();
 });
 addEventListener('keyup',e=>{keys[e.code]=false;});
 addEventListener('blur',()=>{for(const k in keys) keys[k]=false; touch.gas=touch.drift=touch.down=false; if(ctlMode!=='tilt') touch.steer=0;});
@@ -900,7 +901,7 @@ if(MOBILE){
   ['touchstart','touchmove','touchend','touchcancel'].forEach(n=>document.addEventListener(n,sync,{passive:false}));
   ['gesturestart','gesturechange'].forEach(n=>document.addEventListener(n,e=>e.preventDefault()));
   const tap=(id,fn)=>document.getElementById(id).addEventListener('pointerdown',e=>{ e.preventDefault(); fn(e.currentTarget); });
-  tap('bResp',()=>{ if(state==='race') respawn(); });
+  tap('bResp',()=>{ if(state==='race') respawn(); }); tap('bCam',()=>nextCam());
   tap('bMute',b=>{ muted=!muted; b.classList.toggle('on',muted); });
   addEventListener('contextmenu',e=>e.preventDefault());
   ['startBtn','hostBtn','joinBtn','launchBtn','againBtn'].forEach(id=>document.getElementById(id).addEventListener('click',goFull));
@@ -1247,6 +1248,11 @@ function step(dt){
 }
 
 // ---------- Caméra, HUD, boucle ----------
+// caméras de course : 0 poursuite, 1 capot (vue pilote), 2 pare-chocs (ras du sol, voiture invisible)
+let camMode=0; try{ camMode=+localStorage.getItem('hrc_cam')||0; }catch(e){}
+const CAM_NAMES=['Vue poursuite','Vue capot','Vue pare-chocs'], camTmp2=new THREE.Vector3(), camLook2=new THREE.Vector3();
+function nextCam(){ camMode=(camMode+1)%3; try{ localStorage.setItem('hrc_cam',String(camMode)); }catch(e){} camFlash=1.4; }
+let camFlash=0;
 let camH=0, camY=0, wheelSpin=0, bodyYaw=0, bodyRoll=0, menuT=0;
 const camPos=new THREE.Vector3(), camTmp=new THREE.Vector3(), look=new THREE.Vector3();
 function inSolid(x,z){
@@ -1260,6 +1266,14 @@ function updateCamera(dt){
     menuT+=dt; camY=car.y; camera.position.set(car.x+Math.cos(menuT*0.3)*34, car.y+13, car.z+Math.sin(menuT*0.3)*34); camera.lookAt(car.x, car.y+2, car.z); camera.fov=60;
   } else {
     let d=car.h-camH; d=Math.atan2(Math.sin(d),Math.cos(d)); camH+=d*(1-Math.exp(-5.5*dt));
+    if(camMode>0){ camY=car.y; carG.updateMatrixWorld(true);
+      const pov=camMode===1, yaw=pov?bodyYaw*0.5:0, cy=Math.cos(yaw), sy=Math.sin(yaw);
+      camTmp2.set(0, pov?3.35:1.25, pov?0.9:4.6); camLook2.set(sy*30, pov?1.5:1.0, cy*30+(pov?0.9:4.6));
+      carG.localToWorld(camTmp2); carG.localToWorld(camLook2); camera.position.copy(camTmp2);
+      if(car.hit>0.02){ camera.position.x+=(Math.random()-0.5)*car.hit*0.6; camera.position.y+=(Math.random()-0.5)*car.hit*0.4; }
+      camera.lookAt(camLook2); camera.rotation.z+=bodyRoll*(pov?0.6:0.3);
+      camera.fov+=((pov?74:80)+14*r+(car.boost>0?8:0)+4*(car.draft||0)-camera.fov)*Math.min(1,6*dt);
+      camera.updateProjectionMatrix(); return; }
     const sx=Math.sin(camH), sz=Math.cos(camH); let dist=15+3*r;
     for(let k=0;k<6 && inSolid(car.x-sx*dist, car.z-sz*dist);k++) dist*=0.7;
     camY+=(car.y-camY)*Math.min(1,8*dt);
@@ -1295,6 +1309,7 @@ function updateHud(){
   if(state==='race'){ $('time').textContent=fmt(raceT-lapStart); $('lap').textContent=Math.min(LAPS, lapTimes.length+1); }
   const msg=$('msg'); let m='';
   if(state==='race'){ if(wrongT>0.8) m=tr('Demi-tour !'); else if(lastLapT>0) m=tr('Dernier tour !'); else if(car.boost>0) m=tr('Turbo !'); }
+  if(!m && camFlash>0 && state!=='menu'){ m=tr(CAM_NAMES[camMode]); } if(camFlash>0) camFlash-=1/60;
   msg.classList.toggle('big', lastLapT>0 && !(wrongT>0.8)); if(lastLapT>0) lastLapT-=1/60;
   drawSpeedLines();
   msg.textContent=m; msg.style.display=m?'block':'none';
@@ -1307,6 +1322,7 @@ function pitchOf(i,h,cur,dt){ if(!CH || i<0) return 0; const p=T.pts[i], t=-Math
 // hauteur d'une voiture vue de loin (autres joueurs, ralenti) : on garde le dernier point de piste pour ne pas confondre le pont et le dessous
 function poseY(o,x,z,hint){ if(!CH) return 0; if(hint!==undefined) o.i=hint; const r=nearest(x,z,o.i===undefined?-1:o.i,o.y); o.i=r[0]; o.y=tY(r[0],x,z); return o.y; }
 function updateCarVisual(dt){
+  carG.visible=!(camMode===2 && !idle() && !rp.on);
   const fx=Math.sin(car.h), fz=Math.cos(car.h), vf=car.vx*fx+car.vz*fz;
   carG.position.x=car.x; carG.position.z=car.z; carG.rotation.y=car.h; carG.position.y=0.45+car.y; carG.rotation.x=pitchOf(car.idx,car.h,carG.rotation.x,dt);
   const ty=car.drift?car.dDir*0.32:0, tr=(car.drift?car.dDir*0.1:0)+car.steer*0.05*Math.min(1,Math.abs(vf)/80);
