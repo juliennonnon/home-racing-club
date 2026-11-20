@@ -1265,7 +1265,7 @@ var post = (()=>{
   const pass=(m,src,dst,dx,dy,thr)=>{ quad.material=m; m.uniforms.t.value=src.texture; if(m===blur){ m.uniforms.d.value.set(dx,dy); m.uniforms.thr.value=thr; } renderer.setRenderTarget(dst); renderer.render(sc,cam); };
   return { on:true,
     size(w,h){ rtS.setSize(w,h); rtA.setSize(Math.max(2,w>>2),Math.max(2,h>>2)); rtB.setSize(Math.max(2,w>>2),Math.max(2,h>>2)); },
-    render(){ if(!this.on){ renderer.setRenderTarget(null); renderer.render(scene,camera); return; }
+    render(){ if(BAKE.update) BAKE.update(camera); if(!this.on){ renderer.setRenderTarget(null); renderer.render(scene,camera); return; }
       renderer.setRenderTarget(rtS); renderer.render(scene,camera);
       const ix=1/rtA.width, iy=1/rtA.height; down.uniforms.d.value.set(1/rtS.width,1/rtS.height); pass(down,rtS,rtA); pass(blur,rtA,rtB,ix,0,0); pass(blur,rtB,rtA,0,iy,0); pass(blur,rtA,rtB,ix*2.2,0,0); pass(blur,rtB,rtA,0,iy*2.2,0);
       comp.uniforms.b.value=rtA.texture; comp.uniforms.time.value=(performance.now()%1000)/1000; pass(comp,rtS,null); } };
@@ -1341,6 +1341,69 @@ function frame(now){
     else if(avg>0.03 && qLevel<2){ qLevel++; if(qLevel===1){ renderer.setPixelRatio(1); resize(); } else { post.on=false; sun.shadow.mapSize.set(2048,2048); if(sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map=null; } } } } }
   post.render();
 }
+// ---------- Éclairage pré-calculé dans Blender (lightmap + couleurs de sommets) ----------
+// ?bake=0 pour comparer avec l'ancien éclairage temps réel
+const BAKE = {on: !/[?&]bake=0/.test(location.search), gain: 0.85, relief: 1.6, ready: false, mats: new Map()};
+(function(){
+  if(!BAKE.on) return;
+  const keyDirW = SUN_DIR.clone().negate(), uKey = {value: new THREE.Vector3()}, uGain = {value: 1}, uRelief = {value: BAKE.relief}, uMap = {value: null};
+  const SYNC = ['map','normalMap','roughnessMap','metalnessMap','bumpMap','alphaMap'];
+  BAKE.update = cam=>{ uKey.value.copy(keyDirW).transformDirection(cam.matrixWorldInverse);
+    BAKE.mats.forEach(b=>{ const m = b.userData.src; let ch = false;   // textures chargées après coup (photos) : on les recopie
+      for(const p of SYNC) if(b[p] !== m[p]){ b[p] = m[p]; ch = true; } if(!b.color.equals(m.color)) b.color.copy(m.color); if(m.emissive && !b.emissive.equals(m.emissive)){ b.emissive.copy(m.emissive); b.emissiveIntensity = m.emissiveIntensity; } if(ch) b.needsUpdate = true; }); };
+  function bakedMat(m, atlas){
+    const k = m.uuid + (atlas ? 'a' : 'v'); if(BAKE.mats.has(k)) return BAKE.mats.get(k);
+    const b = m.clone(); b.lightMap = null; b.aoMap = null;
+    b.onBeforeCompile = sh=>{
+      Object.assign(sh.uniforms, {bakeKey: uKey, bakeGain: uGain, bakeRelief: uRelief, bakeMap: uMap});
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\n' + (atlas ? 'attribute vec2 bakeUv; varying vec2 vBakeUv;' : 'attribute vec3 bakeCol; varying vec3 vBakeCol;'))
+        .replace('#include <uv_vertex>', '#include <uv_vertex>\n' + (atlas ? 'vBakeUv = bakeUv;' : 'vBakeCol = pow(bakeCol, vec3(2.2));'));
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 bakeKey; uniform float bakeGain, bakeRelief;\n' + (atlas ? 'uniform sampler2D bakeMap; varying vec2 vBakeUv;' : 'varying vec3 vBakeCol;'))
+        .replace('#include <lights_fragment_begin>', `GeometricContext geometry; geometry.position = - vViewPosition; geometry.normal = normal;
+geometry.viewDir = ( isOrthographic ) ? vec3( 0, 0, 1 ) : normalize( vViewPosition );
+#ifdef CLEARCOAT
+geometry.clearcoatNormal = clearcoatNormal;
+#endif
+vec3 iblIrradiance = vec3( 0.0 );
+vec3 irradiance = ${atlas ? 'sRGBToLinear( texture2D( bakeMap, vBakeUv ) ).rgb' : 'vBakeCol'};
+#ifndef FLAT_SHADED
+irradiance *= clamp( 1.0 + bakeRelief * ( dot( normal, bakeKey ) - dot( normalize( vNormal ), bakeKey ) ), 0.55, 1.6 );
+#endif
+irradiance *= bakeGain;
+vec3 radiance = vec3( 0.0 ); vec3 clearcoatRadiance = vec3( 0.0 );`);
+    };
+    b.customProgramCacheKey = ()=>'bake' + (atlas ? 'A' : 'V');
+    b.userData.src = m; BAKE.mats.set(k, b); return b;
+  }
+  const keyOf = (o, g)=>{ const p = g.attributes.position, v = new THREE.Vector3().fromBufferAttribute(p, 0).applyMatrix4(o.matrixWorld);
+    return [p.count, v.x.toFixed(1), v.y.toFixed(1), v.z.toFixed(1)].map(Number).join('|'); };
+  function apply(data){
+    scene.updateMatrixWorld(true); let ok = 0;
+    scene.traverse(o=>{
+      if(!o.isMesh || o.userData.baked) return; let c = o, car = false; while(c){ if(c === my.g) car = true; c = c.parent; } if(car) return;
+      const m = Array.isArray(o.material) ? o.material[0] : o.material; if(m.transparent || m.type === 'MeshBasicMaterial' || m.type === 'ShaderMaterial') return;
+      const g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone(), list = data.byKey.get(keyOf(o, g)); if(!list || !list.length) return;
+      const e = list.shift(), n = g.attributes.position.count;
+      if(e.a) g.setAttribute('bakeUv', new THREE.BufferAttribute(new Uint16Array(data.uv.buffer, data.uv.byteOffset + e.o * 2, n * 2), 2, true));
+      else g.setAttribute('bakeCol', new THREE.BufferAttribute(new Uint8Array(data.col.buffer, data.col.byteOffset + e.o, n * 3), 3, true));
+      o.geometry = g; o.material = Array.isArray(o.material) ? o.material.map(mm=>bakedMat(mm, e.a)) : bakedMat(m, e.a); o.receiveShadow = false; o.userData.baked = true; ok++;
+    });
+    return ok;
+  }
+  Promise.all([fetch('assets/salon/lumiere.bin').then(r=>{ if(!r.ok) throw 0; return r.arrayBuffer(); }),
+    new Promise((res, rej)=>new THREE.TextureLoader().load(MOBILE ? 'assets/salon/lightmap_m.jpg' : 'assets/salon/lightmap.jpg', res, undefined, rej))])
+  .then(([buf, tex])=>{
+    const hl = new DataView(buf).getUint32(0, true), hdr = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 4, hl)));
+    const uv = new Uint16Array(buf, 4 + hl, hdr.nuv), col = new Uint8Array(buf, 4 + hl + hdr.nuv * 2, hdr.ncol), byKey = new Map();
+    hdr.meshes.forEach(e=>{ const k = e.k.join('|'); if(!byKey.has(k)) byKey.set(k, []); byKey.get(k).push(e); });
+    tex.encoding = THREE.LinearEncoding; tex.anisotropy = 4; uMap.value = tex;
+    uGain.value = hdr.lmax * Math.PI * BAKE.gain;
+    const data = {uv, col, byKey}, n = apply(data); setTimeout(()=>apply(data), 3000);
+    // l'éclairage est dans les textures : on coupe les lumières d'appoint et l'ombre du soleil (gros gain sur mobile)
+    renderer.shadowMap.enabled = false; scene.traverse(o=>{ if(o.isLight && o.castShadow) o.castShadow = false; });
+    BAKE.ready = true; console.log('[bake] objets éclairés :', n);
+  }).catch(e=>console.warn('[bake] indisponible, éclairage temps réel', e));
+})();
 resize(); requestAnimationFrame(frame);
 </script>
 </body>
